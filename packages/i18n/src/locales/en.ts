@@ -129,4 +129,9 @@ export const en = {
   yes: 'Yes',
   no: 'No',
   unknown: 'Unsure',
+  noTrendData: 'Not enough data yet. Please record daily care first.',
+  notifyRecipients: 'Recipients',
+  addRecipient: 'Add recipient',
+  notifyMethod: 'Notification method',
+  rolePlaceholder: 'e.g. Care organization, Case manager',
 } as const;

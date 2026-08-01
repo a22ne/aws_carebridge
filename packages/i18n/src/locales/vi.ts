@@ -129,4 +129,9 @@ export const vi = {
   yes: 'Có',
   no: 'Không',
   unknown: 'Không chắc',
+  noTrendData: 'Chưa đủ dữ liệu. Vui lòng ghi nhận chăm sóc hàng ngày trước.',
+  notifyRecipients: 'Người nhận',
+  addRecipient: 'Thêm người nhận',
+  notifyMethod: 'Phương thức thông báo',
+  rolePlaceholder: 'Ví dụ: Tổ chức chăm sóc, Quản lý ca',
 } as const;

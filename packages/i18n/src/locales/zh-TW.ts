@@ -164,4 +164,9 @@ export const zhTW = {
   yes: '是',
   no: '否',
   unknown: '不確定',
+  noTrendData: '尚無足夠資料，請先記錄日常照護數據。',
+  notifyRecipients: '通報對象',
+  addRecipient: '新增通報對象',
+  notifyMethod: '通報方式',
+  rolePlaceholder: '例如：長照機構、個管師',
 } as const;

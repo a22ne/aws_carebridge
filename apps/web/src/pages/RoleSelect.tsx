@@ -13,7 +13,8 @@ export default function RoleSelect() {
     if (role === 'caregiver') {
       navigate('/caregiver-profile');
     } else {
-      navigate('/contact-profile');
+      // Contact goes to choice: create new family or join existing
+      navigate('/contact-choice');
     }
   };
 

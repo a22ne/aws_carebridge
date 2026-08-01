@@ -16,12 +16,14 @@ export default function ContactProfile() {
     localStorage.setItem('carebridge-user-name', name.trim());
     localStorage.setItem('carebridge-user-phone', phone.trim());
     localStorage.setItem('carebridge-user-relationship', relationship.trim());
-    navigate('/contact-choice');
+    // After contact profile, go to elder setup (create family)
+    navigate('/setup');
   };
 
   return (
     <div className="flex min-h-screen flex-col bg-background p-6">
       <div className="mb-6">
+        <button onClick={() => navigate(-1)} className="mb-3 text-lg">←</button>
         <h1 className="text-2xl font-bold text-ink">{t('contactProfileTitle')}</h1>
         <p className="mt-1 text-sm text-muted">{t('contactProfileDesc')}</p>
       </div>

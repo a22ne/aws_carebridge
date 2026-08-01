@@ -14,7 +14,7 @@ export default function ContactChoice() {
 
       <div className="w-full max-w-xs space-y-4">
         <button
-          onClick={() => navigate('/setup')}
+          onClick={() => navigate('/contact-profile')}
           className="card w-full p-6 text-left transition-shadow hover:shadow-md"
         >
           <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-surface text-2xl">

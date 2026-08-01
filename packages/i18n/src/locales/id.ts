@@ -129,4 +129,9 @@ export const id = {
   yes: 'Ya',
   no: 'Tidak',
   unknown: 'Tidak yakin',
+  noTrendData: 'Belum cukup data. Silakan catat perawatan harian terlebih dahulu.',
+  notifyRecipients: 'Penerima',
+  addRecipient: 'Tambah penerima',
+  notifyMethod: 'Metode notifikasi',
+  rolePlaceholder: 'Mis. Organisasi perawatan, Manajer kasus',
 } as const;

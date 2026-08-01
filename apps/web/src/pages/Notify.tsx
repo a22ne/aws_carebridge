@@ -4,6 +4,14 @@ import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
 import * as api from '@/services/api';
 
+interface Recipient {
+  id: string;
+  name: string;
+  phone: string;
+  role: string;
+  enabled: boolean;
+}
+
 export default function Notify() {
   const { t } = useI18n();
   const { householdId } = useAppState();
@@ -16,19 +24,49 @@ export default function Notify() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [toggles, setToggles] = useState({ family: true, org: true, manager: false });
+
+  // Editable recipients
+  const contactName = localStorage.getItem('carebridge-user-name') || '';
+  const contactPhone = localStorage.getItem('carebridge-user-phone') || '';
+  const contactRelation = localStorage.getItem('carebridge-user-relationship') || '';
+
+  const [recipients, setRecipients] = useState<Recipient[]>([
+    { id: '1', name: contactName, phone: contactPhone, role: contactRelation || t('family'), enabled: true },
+  ]);
+
+  const [showAdd, setShowAdd] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newRole, setNewRole] = useState('');
+
+  const addRecipient = () => {
+    if (!newName.trim() || !newPhone.trim()) return;
+    setRecipients(prev => [...prev, {
+      id: Date.now().toString(),
+      name: newName.trim(),
+      phone: newPhone.trim(),
+      role: newRole.trim() || t('careOrg'),
+      enabled: true,
+    }]);
+    setNewName('');
+    setNewPhone('');
+    setNewRole('');
+    setShowAdd(false);
+  };
+
+  const toggleRecipient = (id: string) => {
+    setRecipients(prev => prev.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
+  };
 
   const handleSend = async () => {
     if (!incidentId || !hhId) {
       setErrorMsg('無法送出通知：缺少事件資訊');
       return;
     }
-
     setLoading(true);
     setErrorMsg('');
 
     const res = await api.notifyContacts(incidentId, hhId);
-
     if (res.success) {
       setSent(true);
     } else {
@@ -37,9 +75,13 @@ export default function Notify() {
     setLoading(false);
   };
 
+  const handleCall = (phone: string) => {
+    window.open(`tel:${phone}`, '_self');
+  };
+
   if (sent) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-accent-surface text-3xl text-green-700">
           ✓
         </div>
@@ -53,10 +95,13 @@ export default function Notify() {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">{t('notifyTitle')}</h1>
-        <p className="mt-1 text-sm text-muted">{t('notifyDesc')}</p>
+    <div className="min-h-screen bg-background p-6 space-y-4">
+      <div className="flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="text-lg">←</button>
+        <div>
+          <h1 className="text-2xl font-bold">{t('notifyTitle')}</h1>
+          <p className="mt-1 text-sm text-muted">{t('notifyDesc')}</p>
+        </div>
       </div>
 
       {/* Summary */}
@@ -65,53 +110,101 @@ export default function Notify() {
         <div className="space-y-2 text-[13px]">
           <div className="grid grid-cols-[80px_1fr] gap-2 border-t border-line pt-2">
             <span className="font-bold text-muted">{t('symptoms')}</span>
-            <span>食慾下降、呼吸急促、行走不穩</span>
+            <span>{t('noData')}</span>
           </div>
           <div className="grid grid-cols-[80px_1fr] gap-2 border-t border-line pt-2">
             <span className="font-bold text-muted">{t('risk')}</span>
-            <span>中高風險，建議安排醫療評估</span>
+            <span>{t('noData')}</span>
           </div>
           <div className="grid grid-cols-[80px_1fr] gap-2 border-t border-line pt-2">
             <span className="font-bold text-muted">{t('suggest')}</span>
-            <span>聯繫家屬，持續觀察意識與呼吸，安排診所或醫療評估。</span>
+            <span>{t('noData')}</span>
           </div>
         </div>
       </div>
 
-      {/* Recipients */}
-      <div className="space-y-2">
-        {[
-          { key: 'family' as const, label: t('family'), sub: '兒子 · 台北' },
-          { key: 'org' as const, label: t('careOrg'), sub: '花蓮社區照護站' },
-          { key: 'manager' as const, label: t('caseManager'), sub: 'Long-term care case manager' },
-        ].map(r => (
-          <div key={r.key} className="card flex items-center justify-between p-3">
-            <div>
-              <strong className="text-sm">{r.label}</strong>
-              <span className="block text-[11px] text-muted">{r.sub}</span>
+      {/* Recipients — editable */}
+      <div>
+        <h3 className="mb-2 text-sm font-bold">{t('notifyRecipients')}</h3>
+        <div className="space-y-2">
+          {recipients.map(r => (
+            <div key={r.id} className="card flex items-center justify-between p-3">
+              <div className="flex-1">
+                <strong className="text-sm">{r.name}</strong>
+                <span className="block text-[11px] text-muted">{r.role} · {r.phone}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleCall(r.phone)}
+                  className="text-sm text-primary"
+                  title="Call"
+                >
+                  📞
+                </button>
+                <button
+                  onClick={() => toggleRecipient(r.id)}
+                  className={`h-6 w-11 rounded-full p-0.5 transition-colors ${
+                    r.enabled ? 'bg-accent' : 'bg-[#DDE5E8]'
+                  }`}
+                >
+                  <div className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    r.enabled ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
             </div>
-            <button
-              onClick={() => setToggles(prev => ({ ...prev, [r.key]: !prev[r.key] }))}
-              className={`h-6 w-11 rounded-full p-0.5 transition-colors ${
-                toggles[r.key] ? 'bg-accent' : 'bg-[#DDE5E8]'
-              }`}
-              aria-label={`Toggle ${r.label}`}
-            >
-              <div
-                className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                  toggles[r.key] ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
+          ))}
+        </div>
+
+        {/* Add new recipient */}
+        {showAdd ? (
+          <div className="mt-3 card p-4 space-y-2">
+            <input
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              placeholder={t('yourName')}
+              className="w-full rounded-xl border border-line bg-[#FBFCFD] px-3 py-2 text-sm"
+            />
+            <input
+              value={newPhone}
+              onChange={e => setNewPhone(e.target.value)}
+              placeholder={t('yourPhone')}
+              className="w-full rounded-xl border border-line bg-[#FBFCFD] px-3 py-2 text-sm"
+            />
+            <input
+              value={newRole}
+              onChange={e => setNewRole(e.target.value)}
+              placeholder={t('rolePlaceholder')}
+              className="w-full rounded-xl border border-line bg-[#FBFCFD] px-3 py-2 text-sm"
+            />
+            <div className="flex gap-2">
+              <button onClick={addRecipient} className="btn-primary flex-1 text-sm">{t('confirm')}</button>
+              <button onClick={() => setShowAdd(false)} className="btn-ghost flex-1 text-sm">{t('cancel')}</button>
+            </div>
           </div>
-        ))}
+        ) : (
+          <button onClick={() => setShowAdd(true)} className="mt-2 w-full rounded-2xl border-2 border-dashed border-line p-3 text-center text-sm text-muted">
+            + {t('addRecipient')}
+          </button>
+        )}
       </div>
 
-      {/* Preview */}
-      <div className="rounded-2xl bg-[#EFF5F7] p-4">
-        <strong className="text-sm">{t('notifyPreview')}</strong>
-        <div className="mt-2 rounded-2xl bg-white p-3 text-xs leading-relaxed text-muted">
-          CareBridge AI：林先生今日出現食慾下降、呼吸急促與行走不穩。AI 判定中高風險，建議儘速聯繫照顧者並安排醫療評估。
+      {/* Notify options */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-bold">{t('notifyMethod')}</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <button onClick={handleSend} disabled={loading} className="btn-primary text-sm disabled:opacity-50">
+            {loading ? t('loading') : t('sendViaChat')}
+          </button>
+          <button
+            onClick={() => {
+              const enabled = recipients.filter(r => r.enabled);
+              if (enabled.length > 0) handleCall(enabled[0].phone);
+            }}
+            className="btn-ghost text-sm"
+          >
+            {t('callEmergency')}
+          </button>
         </div>
       </div>
 
@@ -120,14 +213,6 @@ export default function Notify() {
           {errorMsg}
         </div>
       )}
-
-      <button
-        onClick={handleSend}
-        disabled={loading}
-        className="btn-primary w-full disabled:opacity-50"
-      >
-        {loading ? t('loading') : t('sendNotify')}
-      </button>
     </div>
   );
 }
