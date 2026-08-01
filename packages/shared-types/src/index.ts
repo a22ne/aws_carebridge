@@ -20,7 +20,11 @@ export interface ElderProfile {
   elderId: string;
   displayName: string;
   age: number;
+  birthday?: string;
+  city?: string;
+  gender?: string;
   chronicConditions: string[];
+  otherConditions?: string;
   medications: string[];
   allergies: string[];
   baselineMobility: string;

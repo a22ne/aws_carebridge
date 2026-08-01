@@ -11,7 +11,11 @@ export default function ElderSetup() {
 
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
+  const [birthday, setBirthday] = useState('');
+  const [city, setCity] = useState('');
+  const [gender, setGender] = useState('');
   const [conditions, setConditions] = useState('');
+  const [otherConditions, setOtherConditions] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -25,7 +29,11 @@ export default function ElderSetup() {
     const res = await api.createHousehold({
       displayName: name.trim(),
       age: Number(age),
+      birthday: birthday || undefined,
+      city: city.trim() || undefined,
+      gender: gender.trim() || undefined,
       chronicConditions: conditions.split(',').map(s => s.trim()).filter(Boolean),
+      otherConditions: otherConditions.trim() || undefined,
     });
 
     if (res.success && res.data) {
@@ -42,50 +50,106 @@ export default function ElderSetup() {
   return (
     <div className="flex min-h-screen flex-col bg-background p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">建立照護家庭</h1>
-        <p className="mt-1 text-sm text-muted">請填寫長者基本資料</p>
+        <button onClick={() => navigate(-1)} className="mb-3 text-lg">←</button>
+        <h1 className="text-2xl font-bold text-ink">{t('createFamilyTitle')}</h1>
+        <p className="mt-1 text-sm text-muted">{t('createFamilyDesc')}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="card p-4">
           <label className="block text-sm font-bold text-ink">
-            姓名
+            {t('yourName')}
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="例如：林先生"
+              placeholder={t('elderNamePlaceholder')}
               className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
               required
             />
           </label>
         </div>
 
-        <div className="card p-4">
-          <label className="block text-sm font-bold text-ink">
-            年齡
-            <input
-              type="number"
-              value={age}
-              onChange={e => setAge(e.target.value)}
-              placeholder="83"
-              min="0"
-              max="120"
-              className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
-              required
-            />
-          </label>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="card p-4">
+            <label className="block text-sm font-bold text-ink">
+              {t('age')}
+              <input
+                type="number"
+                value={age}
+                onChange={e => setAge(e.target.value)}
+                placeholder="83"
+                min="0"
+                max="120"
+                className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
+                required
+              />
+            </label>
+          </div>
+
+          <div className="card p-4">
+            <label className="block text-sm font-bold text-ink">
+              {t('gender')}
+              <input
+                type="text"
+                value={gender}
+                onChange={e => setGender(e.target.value)}
+                placeholder={t('genderPlaceholder')}
+                className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="card p-4">
+            <label className="block text-sm font-bold text-ink">
+              {t('birthday')}
+              <input
+                type="date"
+                value={birthday}
+                onChange={e => setBirthday(e.target.value)}
+                className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink"
+              />
+            </label>
+          </div>
+
+          <div className="card p-4">
+            <label className="block text-sm font-bold text-ink">
+              {t('city')}
+              <input
+                type="text"
+                value={city}
+                onChange={e => setCity(e.target.value)}
+                placeholder={t('cityPlaceholder')}
+                className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
+              />
+            </label>
+          </div>
         </div>
 
         <div className="card p-4">
           <label className="block text-sm font-bold text-ink">
-            慢性病 (以逗號分隔)
+            {t('chronicConditionsLabel')}
             <input
               type="text"
               value={conditions}
               onChange={e => setConditions(e.target.value)}
-              placeholder="例如：高血壓, 糖尿病"
+              placeholder={t('chronicConditionsPlaceholder')}
               className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
+            />
+          </label>
+        </div>
+
+        <div className="card p-4">
+          <label className="block text-sm font-bold text-ink">
+            {t('otherConditions')}
+            <textarea
+              value={otherConditions}
+              onChange={e => setOtherConditions(e.target.value)}
+              placeholder={t('otherConditionsPlaceholder')}
+              rows={2}
+              className="mt-1.5 w-full resize-none rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
             />
           </label>
         </div>

@@ -4,7 +4,7 @@ import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
 import { ElderDetail } from '@/components/ElderDetail';
 import * as api from '@/services/api';
-import type { Incident } from '@carebridge/shared-types';
+import type { Incident, ElderProfile } from '@carebridge/shared-types';
 
 export default function CaregiverHome() {
   const { t } = useI18n();
@@ -12,14 +12,26 @@ export default function CaregiverHome() {
   const navigate = useNavigate();
 
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [elderProfile, setElderProfile] = useState<ElderProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showElderDetail, setShowElderDetail] = useState(false);
 
   useEffect(() => {
-    if (!householdId) return;
-    api.getHouseholdIncidents(householdId).then(res => {
-      if (res.success && res.data) {
-        setIncidents(res.data as Incident[]);
+    if (!householdId) {
+      setLoading(false);
+      return;
+    }
+
+    // Fetch household (elder profile) and incidents in parallel
+    Promise.all([
+      api.getHousehold(householdId),
+      api.getHouseholdIncidents(householdId),
+    ]).then(([householdRes, incidentsRes]) => {
+      if (householdRes.success && householdRes.data) {
+        setElderProfile((householdRes.data as any).elderProfile || null);
+      }
+      if (incidentsRes.success && incidentsRes.data) {
+        setIncidents(incidentsRes.data as Incident[]);
       }
       setLoading(false);
     });
@@ -38,8 +50,14 @@ export default function CaregiverHome() {
           👴
         </div>
         <div className="flex-1">
-          <h2 className="text-xl font-bold">{t('elderName')}</h2>
-          <p className="text-xs text-muted">{t('tapForDetail')}</p>
+          <h2 className="text-xl font-bold">
+            {elderProfile?.displayName || t('elderName')}
+            {elderProfile?.age ? `, ${elderProfile.age}` : ''}
+          </h2>
+          <p className="text-xs text-muted">
+            {elderProfile?.city ? `${elderProfile.city} · ` : ''}
+            {elderProfile?.chronicConditions?.join(', ') || t('tapForDetail')}
+          </p>
         </div>
       </button>
 
@@ -49,7 +67,7 @@ export default function CaregiverHome() {
           <div className="flex items-center justify-between">
             <h3 className="text-[15px] font-bold">{t('aiRiskReminder')}</h3>
             <span className="rounded-full bg-[#F9E6C7] px-2.5 py-1 text-[11px] font-bold text-[#9B621D]">
-              {latestIncident.riskLevel}
+              {t(`risk_${latestIncident.riskLevel}` as any) || latestIncident.riskLevel}
             </span>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-[#7A5A28]">
@@ -94,15 +112,19 @@ export default function CaregiverHome() {
         </div>
       )}
 
-      {/* Elder Detail Panel */}
+      {/* Elder Detail Panel — read-only for caregiver */}
       <ElderDetail
         open={showElderDetail}
         onClose={() => setShowElderDetail(false)}
-        elder={{
-          displayName: t('elderName'),
-          age: 0,
-          chronicConditions: [],
-        }}
+        elder={elderProfile ? {
+          displayName: elderProfile.displayName,
+          age: elderProfile.age,
+          birthday: elderProfile.birthday,
+          city: elderProfile.city,
+          gender: elderProfile.gender,
+          chronicConditions: elderProfile.chronicConditions || [],
+          otherConditions: elderProfile.otherConditions,
+        } : undefined}
       />
     </div>
   );

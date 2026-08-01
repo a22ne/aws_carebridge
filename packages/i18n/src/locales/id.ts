@@ -147,4 +147,12 @@ export const id = {
   action_SCHEDULE_EVALUATION: 'Jadwalkan pemeriksaan medis dalam waktu dekat',
   suggestedQ1: 'Bagaimana jika lansia tidak mau makan?',
   suggestedQ2: 'Apakah perlu ke dokter?',
+  createFamilyTitle: 'Buat Keluarga Perawatan',
+  createFamilyDesc: 'Masukkan informasi dasar lansia',
+  elderNamePlaceholder: 'Mis. Bpk. Lin',
+  genderPlaceholder: 'Pria / Wanita',
+  cityPlaceholder: 'Mis. Hualien',
+  chronicConditionsLabel: 'Penyakit kronis (pisahkan dengan koma)',
+  chronicConditionsPlaceholder: 'Mis. Hipertensi, Diabetes',
+  otherConditionsPlaceholder: 'Kondisi lain yang perlu diperhatikan...',
 } as const;

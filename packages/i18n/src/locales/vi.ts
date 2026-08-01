@@ -147,4 +147,12 @@ export const vi = {
   action_SCHEDULE_EVALUATION: 'Lên lịch khám sức khỏe trong thời gian tới',
   suggestedQ1: 'Nếu người cao tuổi không chịu ăn thì sao?',
   suggestedQ2: 'Có cần đi bác sĩ không?',
+  createFamilyTitle: 'Tạo Gia Đình Chăm Sóc',
+  createFamilyDesc: 'Vui lòng nhập thông tin cơ bản của người cao tuổi',
+  elderNamePlaceholder: 'Ví dụ: Ông Lin',
+  genderPlaceholder: 'Nam / Nữ',
+  cityPlaceholder: 'Ví dụ: Hualien',
+  chronicConditionsLabel: 'Bệnh mạn tính (phân cách bằng dấu phẩy)',
+  chronicConditionsPlaceholder: 'Ví dụ: Cao huyết áp, Tiểu đường',
+  otherConditionsPlaceholder: 'Các tình trạng khác cần lưu ý...',
 } as const;

@@ -40,10 +40,29 @@ async function request<T>(path: string, options?: RequestInit): Promise<ApiRespo
 export async function createHousehold(elderProfile: {
   displayName: string;
   age: number;
+  birthday?: string;
+  city?: string;
+  gender?: string;
   chronicConditions: string[];
+  otherConditions?: string;
 }) {
   return request<Household>('/households', {
     method: 'POST',
+    body: JSON.stringify({ elderProfile }),
+  });
+}
+
+export async function updateHousehold(householdId: string, elderProfile: {
+  displayName?: string;
+  age?: number;
+  birthday?: string;
+  city?: string;
+  gender?: string;
+  chronicConditions?: string[];
+  otherConditions?: string;
+}) {
+  return request<Household>(`/households/${householdId}`, {
+    method: 'PATCH',
     body: JSON.stringify({ elderProfile }),
   });
 }

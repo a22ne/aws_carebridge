@@ -184,4 +184,13 @@ export const zhTW = {
   // Copilot suggested questions
   suggestedQ1: '長者今天都不吃東西怎麼辦？',
   suggestedQ2: '需要送醫嗎？',
+  // Elder Setup
+  createFamilyTitle: '建立照護家庭',
+  createFamilyDesc: '請填寫長者基本資料',
+  elderNamePlaceholder: '例如：林先生',
+  genderPlaceholder: '男 / 女',
+  cityPlaceholder: '例如：花蓮',
+  chronicConditionsLabel: '慢性病 (以逗號分隔)',
+  chronicConditionsPlaceholder: '例如：高血壓, 糖尿病',
+  otherConditionsPlaceholder: '其他需注意的病徵或狀況...',
 } as const;

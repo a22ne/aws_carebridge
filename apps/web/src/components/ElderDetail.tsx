@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
 
@@ -16,7 +16,7 @@ interface ElderDetailProps {
   open: boolean;
   onClose: () => void;
   elder?: ElderData;
-  onSave?: (data: ElderData) => void;
+  onSave?: (data: ElderData) => void | Promise<void>;
 }
 
 export function ElderDetail({ open, onClose, elder, onSave }: ElderDetailProps) {
@@ -25,14 +25,37 @@ export function ElderDetail({ open, onClose, elder, onSave }: ElderDetailProps) 
   const canEdit = role === 'contact';
 
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState<ElderData>(elder || {
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<ElderData>({
     displayName: '', age: 0, birthday: '', city: '', gender: '', chronicConditions: [], otherConditions: '',
   });
 
+  // Sync form with elder prop when it changes or panel opens
+  useEffect(() => {
+    if (elder) {
+      setForm({
+        displayName: elder.displayName || '',
+        age: elder.age || 0,
+        birthday: elder.birthday || '',
+        city: elder.city || '',
+        gender: elder.gender || '',
+        chronicConditions: elder.chronicConditions || [],
+        otherConditions: elder.otherConditions || '',
+      });
+    }
+  }, [elder, open]);
+
+  // Reset editing state when panel closes
+  useEffect(() => {
+    if (!open) setEditing(false);
+  }, [open]);
+
   if (!open) return null;
 
-  const handleSave = () => {
-    onSave?.(form);
+  const handleSave = async () => {
+    setSaving(true);
+    await onSave?.(form);
+    setSaving(false);
     setEditing(false);
   };
 
@@ -94,8 +117,12 @@ export function ElderDetail({ open, onClose, elder, onSave }: ElderDetailProps) 
               <textarea value={form.otherConditions || ''} onChange={e => updateField('otherConditions', e.target.value)} rows={2} className="mt-1 w-full resize-none rounded-xl border border-line px-3 py-2 text-sm" />
             </label>
             <div className="flex gap-2">
-              <button onClick={handleSave} className="btn-primary flex-1 text-sm">{t('save')}</button>
-              <button onClick={() => setEditing(false)} className="btn-ghost flex-1 text-sm">{t('cancel')}</button>
+              <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 text-sm disabled:opacity-50">
+                {saving ? t('loading') : t('save')}
+              </button>
+              <button onClick={() => setEditing(false)} disabled={saving} className="btn-ghost flex-1 text-sm">
+                {t('cancel')}
+              </button>
             </div>
           </div>
         ) : (

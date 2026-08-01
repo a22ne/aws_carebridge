@@ -147,4 +147,12 @@ export const en = {
   action_SCHEDULE_EVALUATION: 'Schedule a medical check-up soon',
   suggestedQ1: 'What if the elder doesn\'t eat today?',
   suggestedQ2: 'Do they need to see a doctor?',
+  createFamilyTitle: 'Create Care Family',
+  createFamilyDesc: 'Please enter the elder\'s basic information',
+  elderNamePlaceholder: 'e.g. Mr. Lin',
+  genderPlaceholder: 'Male / Female',
+  cityPlaceholder: 'e.g. Hualien',
+  chronicConditionsLabel: 'Chronic conditions (comma separated)',
+  chronicConditionsPlaceholder: 'e.g. Hypertension, Diabetes',
+  otherConditionsPlaceholder: 'Other conditions to note...',
 } as const;

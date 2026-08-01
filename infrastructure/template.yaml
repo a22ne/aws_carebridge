@@ -129,6 +129,22 @@ Resources:
             Path: /households/{householdId}
             Method: GET
 
+  HouseholdUpdateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/household.update
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref HouseholdsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /households/{householdId}
+            Method: PATCH
+
   IncidentCreateFunction:
     Type: AWS::Serverless::Function
     Properties:

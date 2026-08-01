@@ -4,7 +4,7 @@ import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
 import { ElderDetail } from '@/components/ElderDetail';
 import * as api from '@/services/api';
-import type { Incident } from '@carebridge/shared-types';
+import type { Incident, ElderProfile } from '@carebridge/shared-types';
 
 export default function ContactHome() {
   const { t } = useI18n();
@@ -12,23 +12,55 @@ export default function ContactHome() {
   const navigate = useNavigate();
 
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [elderProfile, setElderProfile] = useState<ElderProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [showElderDetail, setShowElderDetail] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
-    if (!householdId) return;
-    loadIncidents();
+    loadData();
   }, [householdId]);
 
-  const loadIncidents = async () => {
-    if (!householdId) return;
+  const loadData = async () => {
+    if (!householdId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    const res = await api.getHouseholdIncidents(householdId);
-    if (res.success && res.data) {
-      setIncidents(res.data as Incident[]);
+    const [householdRes, incidentsRes] = await Promise.all([
+      api.getHousehold(householdId),
+      api.getHouseholdIncidents(householdId),
+    ]);
+
+    if (householdRes.success && householdRes.data) {
+      setElderProfile((householdRes.data as any).elderProfile || null);
+    }
+    if (incidentsRes.success && incidentsRes.data) {
+      setIncidents(incidentsRes.data as Incident[]);
     }
     setLoading(false);
+  };
+
+  const handleElderSave = async (data: any) => {
+    if (!householdId) return;
+    setSaveError('');
+    const res = await api.updateHousehold(householdId, {
+      displayName: data.displayName,
+      age: data.age,
+      birthday: data.birthday,
+      city: data.city,
+      gender: data.gender,
+      chronicConditions: data.chronicConditions,
+      otherConditions: data.otherConditions,
+    });
+
+    if (res.success && res.data) {
+      setElderProfile((res.data as any).elderProfile || null);
+      setShowElderDetail(false);
+    } else {
+      setSaveError(res.error?.message || t('error'));
+    }
   };
 
   const handleStatusUpdate = async (incidentId: string, status: string) => {
@@ -60,11 +92,23 @@ export default function ContactHome() {
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#dce9ee] text-2xl">
           👴
         </div>
-        <div>
-          <h2 className="text-lg font-bold">{t('elderName')}</h2>
-          <p className="text-xs text-muted">{t('tapForDetail')}</p>
+        <div className="flex-1">
+          <h2 className="text-lg font-bold">
+            {elderProfile?.displayName || t('elderName')}
+            {elderProfile?.age ? `, ${elderProfile.age}` : ''}
+          </h2>
+          <p className="text-xs text-muted">
+            {elderProfile?.city ? `${elderProfile.city} · ` : ''}
+            {elderProfile?.chronicConditions?.join(', ') || t('tapForDetail')}
+          </p>
         </div>
       </button>
+
+      {saveError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          {saveError}
+        </div>
+      )}
 
       {/* Household Code */}
       {joinCode && (
@@ -108,7 +152,7 @@ export default function ContactHome() {
                       inc.riskLevel === 'urgent' ? 'bg-orange-100 text-orange-700' :
                       'bg-[#F9E6C7] text-[#9B621D]'
                     }`}>
-                      {inc.riskLevel}
+                      {t(`risk_${inc.riskLevel}` as any) || inc.riskLevel}
                     </span>
                   )}
                 </div>
@@ -149,7 +193,7 @@ export default function ContactHome() {
       </div>
 
       {/* Actions */}
-      <button onClick={loadIncidents} className="btn-ghost w-full text-sm">
+      <button onClick={loadData} className="btn-ghost w-full text-sm">
         {t('refresh')}
       </button>
 
@@ -157,15 +201,20 @@ export default function ContactHome() {
         {t('generateReport')}
       </button>
 
-      {/* Elder Detail Panel */}
+      {/* Elder Detail Panel — editable for contact */}
       <ElderDetail
         open={showElderDetail}
         onClose={() => setShowElderDetail(false)}
-        elder={{
-          displayName: t('elderName'),
-          age: 0,
-          chronicConditions: [],
-        }}
+        elder={elderProfile ? {
+          displayName: elderProfile.displayName,
+          age: elderProfile.age,
+          birthday: elderProfile.birthday,
+          city: elderProfile.city,
+          gender: elderProfile.gender,
+          chronicConditions: elderProfile.chronicConditions || [],
+          otherConditions: elderProfile.otherConditions,
+        } : undefined}
+        onSave={handleElderSave}
       />
     </div>
   );
