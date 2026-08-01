@@ -12,6 +12,8 @@ Rules:
 - Output exactly ONE question.
 - The question must be answerable with yes/no/unknown.
 - Do NOT repeat questions already answered.
+- MAXIMUM 4 questions total. After 4 answers, ALWAYS return isComplete: true.
+- If you have enough information to assess risk after fewer questions, return isComplete: true early.
 - Provide the question text in all 4 languages: zh-TW, en, id, vi.
 - Do NOT diagnose.
 - Output ONLY valid JSON.
@@ -29,7 +31,7 @@ Output JSON schema:
   "isComplete": false
 }
 
-If all critical questions have been answered (typically 3-5 questions), return:
+If all critical questions have been answered OR 4 questions have been asked, return:
 {
   "questionId": null,
   "textByLanguage": {},
@@ -84,6 +86,12 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
           ':now': new Date().toISOString(),
         },
       }));
+    }
+
+    // Hard stop: if 4+ answers, force completion
+    if (currentAnswers.length >= 4) {
+      console.log('[Answer]', { requestId, incidentId, answersCount: currentAnswers.length, forcedComplete: true });
+      return success({ data: { questionId: null, textByLanguage: {}, options: [], isComplete: true }, requestId });
     }
 
     // Generate next question

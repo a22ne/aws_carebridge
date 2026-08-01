@@ -86,6 +86,8 @@ aws_carebridge/
 
 ## Demo
 
+- **Live URL**: https://main.d2sggyq42el3f6.amplifyapp.com
+- **API URL**: https://hmlwdwot6i.execute-api.us-west-2.amazonaws.com/prod
 - **Caregiver flow**: Language → Role → Create Household → Daily Log → New Incident → AI Assessment → Notify
 - **Contact flow**: Language → Role → Join with Code → View Notifications → Update Status
 

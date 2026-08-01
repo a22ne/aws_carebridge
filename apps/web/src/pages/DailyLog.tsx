@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
+import { useAppState } from '@/hooks/useAppState';
+import * as api from '@/services/api';
 
 export default function DailyLog() {
   const { t } = useI18n();
+  const { householdId, elderId } = useAppState();
   const navigate = useNavigate();
 
-  const [meals, setMeals] = useState('');
+  const [meals, setMeals] = useState('50');
   const [medTaken, setMedTaken] = useState<boolean | null>(null);
   const [sleepHours, setSleepHours] = useState('');
   const [mobility, setMobility] = useState('');
@@ -16,25 +19,51 @@ export default function DailyLog() {
   const [temperature, setTemperature] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      // TODO: Call POST /daily-logs API
-      navigate('/timeline');
-    } catch {
-      // error
-    } finally {
-      setLoading(false);
+    if (!householdId) {
+      setErrorMsg('請先建立照護家庭');
+      return;
     }
+
+    setLoading(true);
+    setErrorMsg('');
+
+    const res = await api.createDailyLog({
+      householdId,
+      elderId: elderId || 'unknown',
+      date: new Date().toISOString().split('T')[0],
+      createdByRole: 'caregiver',
+      meals: { percentage: Number(meals) || 0, notes: '' },
+      medication: { taken: medTaken ?? false, notes: '' },
+      sleep: { hours: Number(sleepHours) || 0, quality: 'unknown' },
+      mobility: mobility || 'unknown',
+      breathing: breathing || 'unknown',
+      weight: weight ? Number(weight) : undefined,
+      mood: mood || undefined,
+      temperature: temperature ? Number(temperature) : undefined,
+      notes: notes,
+      aiAlertTriggered: false,
+    } as any);
+
+    if (res.success) {
+      navigate('/timeline');
+    } else {
+      setErrorMsg(res.error?.message || t('error'));
+    }
+    setLoading(false);
   };
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">{t('dailyLogTitle')}</h1>
-        <p className="mt-1 text-sm text-muted">記錄今日照護情況</p>
+      <div className="flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="text-lg">←</button>
+        <div>
+          <h1 className="text-2xl font-bold">{t('dailyLogTitle')}</h1>
+          <p className="mt-1 text-sm text-muted">記錄今日照護情況</p>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
@@ -47,13 +76,13 @@ export default function DailyLog() {
               min="0"
               max="100"
               step="10"
-              value={meals || '50'}
+              value={meals}
               onChange={e => setMeals(e.target.value)}
               className="mt-2 w-full accent-primary"
             />
             <div className="mt-1 flex justify-between text-xs text-muted">
               <span>0%</span>
-              <span className="font-bold text-ink">{meals || '50'}%</span>
+              <span className="font-bold text-ink">{meals}%</span>
               <span>100%</span>
             </div>
           </label>
@@ -189,6 +218,12 @@ export default function DailyLog() {
             />
           </label>
         </div>
+
+        {errorMsg && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+            {errorMsg}
+          </div>
+        )}
 
         <div className="sticky bottom-20 bg-gradient-to-t from-background pt-4">
           <button

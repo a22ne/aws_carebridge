@@ -2,17 +2,19 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
+import { ElderDetail } from '@/components/ElderDetail';
 import * as api from '@/services/api';
 import type { Incident } from '@carebridge/shared-types';
 
 export default function ContactHome() {
   const { t } = useI18n();
-  const { householdId } = useAppState();
+  const { householdId, joinCode } = useAppState();
   const navigate = useNavigate();
 
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [showElderDetail, setShowElderDetail] = useState(false);
 
   useEffect(() => {
     if (!householdId) return;
@@ -50,27 +52,31 @@ export default function ContactHome() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-2">
-        <h1 className="text-2xl font-bold">{t('navHome')}</h1>
-        <p className="text-sm text-muted">聯絡人視角</p>
-      </div>
-
-      {/* Household Info */}
-      <div className="card p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#dce9ee] text-2xl">
-            👴
-          </div>
-          <div>
-            <h2 className="text-lg font-bold">林先生，83歲</h2>
-            <p className="text-xs text-muted">花蓮偏鄉 · 高血壓</p>
-          </div>
+      {/* Elder Card — clickable */}
+      <button
+        onClick={() => setShowElderDetail(true)}
+        className="card flex w-full items-center gap-3 p-4 text-left"
+      >
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#dce9ee] text-2xl">
+          👴
         </div>
-      </div>
+        <div>
+          <h2 className="text-lg font-bold">{t('elderName')}</h2>
+          <p className="text-xs text-muted">{t('tapForDetail')}</p>
+        </div>
+      </button>
+
+      {/* Household Code */}
+      {joinCode && (
+        <div className="card flex items-center justify-between p-3">
+          <span className="text-xs text-muted">{t('householdCode')}</span>
+          <span className="font-mono text-sm font-bold text-primary-dark">{joinCode}</span>
+        </div>
+      )}
 
       {/* Incidents / Notifications */}
       <div>
-        <h3 className="mb-2 text-sm font-bold text-muted">事件與通知</h3>
+        <h3 className="mb-2 text-sm font-bold text-muted">{t('eventsAndNotifications')}</h3>
 
         {loading ? (
           <div className="space-y-2">
@@ -94,7 +100,7 @@ export default function ContactHome() {
               >
                 <div className="flex items-center justify-between">
                   <strong className="text-sm">
-                    {inc.translatedText?.slice(0, 30) || inc.originalText?.slice(0, 30) || '異常事件'}
+                    {inc.translatedText?.slice(0, 30) || inc.originalText?.slice(0, 30) || t('incident')}
                   </strong>
                   {inc.riskLevel && (
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
@@ -108,14 +114,8 @@ export default function ContactHome() {
                 </div>
 
                 <p className="mt-1 text-xs text-muted">
-                  {new Date(inc.createdAt).toLocaleString()} · 狀態: {inc.status}
+                  {new Date(inc.createdAt).toLocaleString()} · {inc.status}
                 </p>
-
-                {inc.extractedSymptoms && inc.extractedSymptoms.length > 0 && (
-                  <p className="mt-1 text-xs text-[#7A5A28]">
-                    症狀：{inc.extractedSymptoms.filter(s => s.status === 'present').map(s => s.label).join('、')}
-                  </p>
-                )}
 
                 {/* Status update buttons */}
                 {inc.status !== 'resolved' && (
@@ -143,25 +143,30 @@ export default function ContactHome() {
           </div>
         ) : (
           <div className="card p-6 text-center text-sm text-muted">
-            目前沒有事件通知
+            {t('noEvents')}
           </div>
         )}
       </div>
 
-      {/* Quick links */}
-      <div className="grid grid-cols-2 gap-3">
-        <button onClick={() => navigate('/timeline')} className="card p-4 text-center text-sm font-bold text-primary-dark">
-          {t('navTimeline')}
-        </button>
-        <button onClick={() => navigate('/trend')} className="card p-4 text-center text-sm font-bold text-primary-dark">
-          {t('navTrend')}
-        </button>
-      </div>
-
-      {/* Refresh */}
+      {/* Actions */}
       <button onClick={loadIncidents} className="btn-ghost w-full text-sm">
-        重新整理
+        {t('refresh')}
       </button>
+
+      <button onClick={() => navigate('/monthly-report')} className="btn-primary w-full text-sm">
+        {t('generateReport')}
+      </button>
+
+      {/* Elder Detail Panel */}
+      <ElderDetail
+        open={showElderDetail}
+        onClose={() => setShowElderDetail(false)}
+        elder={{
+          displayName: t('elderName'),
+          age: 0,
+          chronicConditions: [],
+        }}
+      />
     </div>
   );
 }

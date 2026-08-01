@@ -3,7 +3,7 @@ import { useI18n } from '@/hooks/useI18n';
 
 const NAV_ITEMS = [
   { key: 'navHome', path: '/home', icon: '⌂' },
-  { key: 'navIncident', path: '/incident', icon: '＋' },
+  { key: 'navChat', path: '/chat', icon: '💬' },
   { key: 'navCopilot', path: '/copilot', icon: 'AI' },
   { key: 'navTimeline', path: '/timeline', icon: '◷' },
   { key: 'navTrend', path: '/trend', icon: '↗' },

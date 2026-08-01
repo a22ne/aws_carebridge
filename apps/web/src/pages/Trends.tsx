@@ -1,10 +1,28 @@
+import { useEffect, useState } from 'react';
 import { useI18n } from '@/hooks/useI18n';
+import { useAppState } from '@/hooks/useAppState';
+import * as api from '@/services/api';
 
 const BARS_FOOD = [92, 82, 72, 58, 30];
 const BARS_SLEEP = [78, 66, 58, 48];
 
 export default function Trends() {
   const { t } = useI18n();
+  const { householdId } = useAppState();
+
+  const [alertText, setAlertText] = useState<string | null>(null);
+  const [alertLoading, setAlertLoading] = useState(false);
+
+  useEffect(() => {
+    if (!householdId) return;
+    setAlertLoading(true);
+    api.getTrendAlert(householdId).then(res => {
+      if (res.success && res.data) {
+        setAlertText((res.data as any).alertText);
+      }
+      setAlertLoading(false);
+    });
+  }, [householdId]);
 
   return (
     <div className="space-y-4">
@@ -16,9 +34,15 @@ export default function Trends() {
       {/* AI Trend Alert */}
       <div className="card border-[#F1DDB9] bg-[#FFF9ED] p-4">
         <h3 className="font-bold text-[#8B5B16]">{t('trendAlert')}</h3>
-        <p className="mt-1 text-xs leading-relaxed text-[#705426]">
-          近兩週食量與睡眠都有下降趨勢，且今日出現呼吸急促與行走不穩，建議提高追蹤頻率。
-        </p>
+        {alertLoading ? (
+          <p className="mt-1 animate-pulse text-xs text-[#705426]">AI 分析中...</p>
+        ) : alertText ? (
+          <p className="mt-1 text-xs leading-relaxed text-[#705426]">{alertText}</p>
+        ) : (
+          <p className="mt-1 text-xs text-[#705426]">
+            近兩週食量與睡眠都有下降趨勢，且今日出現呼吸急促與行走不穩，建議提高追蹤頻率。
+          </p>
+        )}
       </div>
 
       {/* Stats */}
@@ -52,7 +76,7 @@ export default function Trends() {
                   height: `${h}%`,
                   background: i === BARS_FOOD.length - 1
                     ? 'linear-gradient(#e7b464, #f3d6a1)'
-                    : 'linear-gradient(var(--tw-gradient-from, #7FB685), var(--tw-gradient-to, #B9D9BE))',
+                    : 'linear-gradient(#7FB685, #B9D9BE)',
                 }}
               />
               <span className="mt-1 text-[10px] text-muted">{[1, 4, 7, 10, 14][i]}</span>

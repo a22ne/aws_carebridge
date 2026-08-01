@@ -5,7 +5,7 @@ export const zhTW = {
 
   // Nav
   navHome: '首頁',
-  navIncident: '事件',
+  navChat: '對話',
   navCopilot: '助手',
   navTimeline: '紀錄',
   navTrend: '趨勢',
@@ -15,16 +15,52 @@ export const zhTW = {
   selectRole: '選擇角色',
   roleCaregiver: '我是照顧者',
   roleContact: '我是聯絡人',
+  caregiverRoleDesc: '我負責照顧長者的日常生活',
+  contactRoleDesc: '我是家屬或雇主，需要了解照護狀況',
+
+  // Profile
+  caregiverProfileTitle: '照顧者資料',
+  caregiverProfileDesc: '請輸入您的基本資料',
+  contactProfileTitle: '聯絡人資料',
+  contactProfileDesc: '請輸入您的基本資料以利通報聯繫',
+  yourName: '姓名',
+  yourPhone: '電話',
+  relationship: '與被照顧者關係',
+  relationshipPlaceholder: '例如：兒子、女兒、雇主',
+  next: '下一步',
+
+  // Contact Choice
+  contactChoiceTitle: '選擇操作',
+  contactChoiceDesc: '您要建立新家庭還是加入已有的照護家庭？',
+  createNewFamily: '建立新家庭',
+  createNewFamilyDesc: '建立長者資料並產生家庭代碼',
+  joinExistingFamily: '加入已有家庭',
+  joinExistingFamilyDesc: '輸入已有的家庭代碼',
 
   // Home
   todayAttention: '今日需留意',
-  mealIntake: '早餐食量',
-  breathingStatus: '呼吸狀態',
-  breathingFast: '偏急促',
   aiRiskReminder: 'AI 風險提醒',
   riskMidHigh: '中高風險',
   newIncident: '建立異常事件',
-  quickNotify: '快速通報',
+  elderName: '長者',
+  tapForDetail: '點擊查看詳細資料',
+  householdCode: '家庭代碼',
+  latestRecord: '最新紀錄',
+  noRecords: '尚無紀錄',
+  noEvents: '目前沒有事件通知',
+  eventsAndNotifications: '事件與通知',
+  refresh: '重新整理',
+  incident: '異常事件',
+
+  // Elder Detail
+  elderDetail: '長者詳細資料',
+  age: '年齡',
+  birthday: '生日',
+  city: '居住城市',
+  gender: '性別',
+  chronicConditions: '慢性病',
+  otherConditions: '其他病徵',
+  noData: '尚無資料',
 
   // Incident
   incidentTitle: '建立異常事件',
@@ -41,6 +77,8 @@ export const zhTW = {
   // Assessment
   assessmentTitle: 'AI 風險判讀',
   reset: '重來',
+  callEmergency: '撥打緊急電話',
+  sendViaChat: '透過對話框傳送',
 
   // Copilot
   copilotTitle: 'AI 照護助手',
@@ -48,6 +86,18 @@ export const zhTW = {
   copilotHello: '你好，我可以協助你整理狀況、判斷風險並準備通報。你想問什麼？',
   copilotPlaceholder: '輸入問題...',
   disclaimer: 'CareBridge AI 不是醫療診斷工具。如出現急性惡化或生命危險，請立即聯絡當地緊急服務或醫療專業人員。',
+
+  // Chat
+  chatRoom: '即時對話',
+  careGuidelines: '照護準則',
+  callContact: '撥打電話',
+  chatEmpty: '開始對話吧',
+  chatPlaceholder: '輸入訊息...',
+  translated: '已翻譯',
+  edit: '編輯',
+  guidelinesPlaceholder: '輸入照護準則...\n例如：\n1. 一天餵三次藥\n2. 兩天洗一次澡',
+  guidelinesEmptyContact: '尚未設定照護準則，點擊「編輯」開始設定',
+  guidelinesEmptyCaregiver: '聯絡人尚未設定照護準則',
 
   // Notification
   notifyTitle: '智慧通報',
@@ -89,6 +139,12 @@ export const zhTW = {
   mobility: '行動力',
   breathing: '呼吸',
   logSave: '儲存紀錄',
+
+  // Monthly Report
+  monthlyReport: '月報',
+  monthlyReportTitle: '本月照護報告',
+  monthlyReportDesc: 'AI 將整理本月的照護紀錄與趨勢，產生摘要報告。',
+  generateReport: '產生月報',
 
   // Status
   statusPending: '待處理',

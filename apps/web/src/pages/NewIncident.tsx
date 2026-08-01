@@ -65,9 +65,12 @@ export default function NewIncident() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">{t('incidentTitle')}</h1>
-        <p className="mt-1 text-sm text-muted">{t('incidentDesc')}</p>
+      <div className="flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="text-lg">←</button>
+        <div>
+          <h1 className="text-2xl font-bold">{t('incidentTitle')}</h1>
+          <p className="mt-1 text-sm text-muted">{t('incidentDesc')}</p>
+        </div>
       </div>
 
       {/* Voice input button */}

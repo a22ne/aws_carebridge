@@ -11,9 +11,9 @@ export default function RoleSelect() {
   const handleSelect = (role: Role) => {
     setRole(role);
     if (role === 'caregiver') {
-      navigate('/setup');
+      navigate('/caregiver-profile');
     } else {
-      navigate('/join');
+      navigate('/contact-profile');
     }
   };
 
@@ -33,9 +33,7 @@ export default function RoleSelect() {
             🧑‍⚕️
           </div>
           <h2 className="text-lg font-bold text-ink">{t('roleCaregiver')}</h2>
-          <p className="mt-1 text-xs text-muted">
-            {t('incidentDesc')}
-          </p>
+          <p className="mt-1 text-xs text-muted">{t('caregiverRoleDesc')}</p>
         </button>
 
         <button
@@ -46,9 +44,7 @@ export default function RoleSelect() {
             👨‍👩‍👧
           </div>
           <h2 className="text-lg font-bold text-ink">{t('roleContact')}</h2>
-          <p className="mt-1 text-xs text-muted">
-            {t('notifyDesc')}
-          </p>
+          <p className="mt-1 text-xs text-muted">{t('contactRoleDesc')}</p>
         </button>
       </div>
     </div>
