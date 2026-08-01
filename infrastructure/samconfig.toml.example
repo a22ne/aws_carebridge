@@ -1,4 +1,4 @@
-# CareBridge AI — SAM Configuration
+# CareBridge AI - SAM Configuration
 # Copy to samconfig.toml and update values
 # NEVER commit samconfig.toml (contains account-specific info)
 

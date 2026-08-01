@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.140",
     "@types/node": "^22.0.0",
+    "esbuild": "^0.21.5",
     "typescript": "^5.5.3",
     "vitest": "^2.0.3"
   }
