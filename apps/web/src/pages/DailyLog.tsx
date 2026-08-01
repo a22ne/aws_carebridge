@@ -21,6 +21,18 @@ const BREATHING_OPTIONS = [
   { code: 'difficult', labelKey: 'breathing_difficult' },
 ] as const;
 
+/**
+ * Local calendar date (YYYY-MM-DD). Must match the Timeline date filter,
+ * which also works in local time — using UTC here would shift the record
+ * to the previous day for users ahead of UTC.
+ */
+function localDateKey(): string {
+  const d = new Date();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
+}
+
 export default function DailyLog() {
   const { t } = useI18n();
   const { householdId, elderId } = useAppState();
@@ -33,6 +45,7 @@ export default function DailyLog() {
   const [breathing, setBreathing] = useState('');
   const [weight, setWeight] = useState('');
   const [mood, setMood] = useState('');
+  const [excretion, setExcretion] = useState('');
   const [temperature, setTemperature] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -54,7 +67,7 @@ export default function DailyLog() {
     const res = await api.createDailyLog({
       householdId,
       elderId: elderId || 'unknown',
-      date: new Date().toISOString().split('T')[0],
+      date: localDateKey(),
       createdByRole: 'caregiver',
       meals: { percentage: Number(meals) || 0, notes: '' },
       medication: { taken: medTaken ?? false, notes: '' },
@@ -63,6 +76,7 @@ export default function DailyLog() {
       breathing: breathing || 'unknown',
       weight: weight ? Number(weight) : undefined,
       mood: mood || undefined,
+      excretion: excretion || undefined,
       temperature: temperature ? Number(temperature) : undefined,
       notes: notes,
       aiAlertTriggered: false,
@@ -223,6 +237,16 @@ export default function DailyLog() {
                 value={mood}
                 onChange={e => setMood(e.target.value)}
                 placeholder={t('moodPlaceholder')}
+                className="mt-1 w-full rounded-xl border border-line bg-[#FBFCFD] px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block text-sm text-ink">
+              {t('excretion')}
+              <input
+                type="text"
+                value={excretion}
+                onChange={e => setExcretion(e.target.value)}
+                placeholder={t('excretionPlaceholder')}
                 className="mt-1 w-full rounded-xl border border-line bg-[#FBFCFD] px-3 py-2 text-sm"
               />
             </label>
