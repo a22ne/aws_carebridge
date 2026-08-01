@@ -11,17 +11,20 @@ export default function JoinHousehold() {
 
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [errorKey, setErrorKey] = useState<string | null>(null);
+  const [errorText, setErrorText] = useState('');
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (code.trim().length !== 6) {
-      setError('請輸入 6 位家庭代碼');
+      setErrorKey('joinCodeLengthError');
+      setErrorText('');
       return;
     }
 
     setLoading(true);
-    setError('');
+    setErrorKey(null);
+    setErrorText('');
 
     const res = await api.joinHousehold(code.toUpperCase());
 
@@ -31,18 +34,22 @@ export default function JoinHousehold() {
         setElder(res.data.elderProfile.elderId);
       }
       navigate('/home');
+    } else if (res.error?.message) {
+      setErrorText(res.error.message);
     } else {
-      setError(res.error?.message || '代碼無效，請重試');
+      setErrorKey('joinCodeInvalidError');
     }
 
     setLoading(false);
   };
 
+  const displayError = errorKey ? t(errorKey as any) : errorText;
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-ink">加入照護家庭</h1>
-        <p className="mt-2 text-sm text-muted">請輸入照顧者提供的家庭代碼</p>
+        <h1 className="text-2xl font-bold text-ink">{t('joinFamilyTitle')}</h1>
+        <p className="mt-2 text-sm text-muted">{t('joinFamilyDesc')}</p>
       </div>
 
       <form onSubmit={handleJoin} className="w-full max-w-xs space-y-4">
@@ -55,6 +62,7 @@ export default function JoinHousehold() {
             maxLength={6}
             className="w-full border-0 bg-transparent text-center font-mono text-2xl font-bold tracking-[0.3em] text-ink outline-none placeholder:text-muted/30"
             autoFocus
+            aria-label={t('householdCode')}
           />
           <div className="mt-2 flex justify-center gap-1">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -68,8 +76,8 @@ export default function JoinHousehold() {
           </div>
         </div>
 
-        {error && (
-          <p className="text-center text-sm text-red-500">{error}</p>
+        {displayError && (
+          <p className="text-center text-sm text-red-500">{displayError}</p>
         )}
 
         <button

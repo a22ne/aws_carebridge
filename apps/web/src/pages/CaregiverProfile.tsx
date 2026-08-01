@@ -33,7 +33,7 @@ export default function CaregiverProfile() {
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Siti"
+              placeholder={t('namePlaceholder')}
               className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
               required
             />

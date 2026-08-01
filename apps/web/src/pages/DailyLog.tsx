@@ -4,6 +4,23 @@ import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
 import * as api from '@/services/api';
 
+/**
+ * Stable codes stored in DynamoDB. Display labels come from i18n so the
+ * backend monitoring rules stay language-independent.
+ */
+const MOBILITY_OPTIONS = [
+  { code: 'normal', labelKey: 'mobility_normal' },
+  { code: 'slightly_unstable', labelKey: 'mobility_slightly_unstable' },
+  { code: 'needs_support', labelKey: 'mobility_needs_support' },
+  { code: 'unable_to_walk', labelKey: 'mobility_unable_to_walk' },
+] as const;
+
+const BREATHING_OPTIONS = [
+  { code: 'normal', labelKey: 'breathing_normal' },
+  { code: 'rapid', labelKey: 'breathing_rapid' },
+  { code: 'difficult', labelKey: 'breathing_difficult' },
+] as const;
+
 export default function DailyLog() {
   const { t } = useI18n();
   const { householdId, elderId } = useAppState();
@@ -19,17 +36,20 @@ export default function DailyLog() {
   const [temperature, setTemperature] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorKey, setErrorKey] = useState<string | null>(null);
+  const [errorText, setErrorText] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!householdId) {
-      setErrorMsg('請先建立照護家庭');
+      setErrorKey('dailyLogNoHousehold');
+      setErrorText('');
       return;
     }
 
     setLoading(true);
-    setErrorMsg('');
+    setErrorKey(null);
+    setErrorText('');
 
     const res = await api.createDailyLog({
       householdId,
@@ -50,19 +70,23 @@ export default function DailyLog() {
 
     if (res.success) {
       navigate('/timeline');
+    } else if (res.error?.message) {
+      setErrorText(res.error.message);
     } else {
-      setErrorMsg(res.error?.message || t('error'));
+      setErrorKey('error');
     }
     setLoading(false);
   };
 
+  const displayError = errorKey ? t(errorKey as any) : errorText;
+
   return (
-    <div className="space-y-4">
+    <div className="min-h-screen bg-background p-6 space-y-4">
       <div className="flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-lg">←</button>
         <div>
           <h1 className="text-2xl font-bold">{t('dailyLogTitle')}</h1>
-          <p className="mt-1 text-sm text-muted">記錄今日照護情況</p>
+          <p className="mt-1 text-sm text-muted">{t('dailyLogDesc')}</p>
         </div>
       </div>
 
@@ -134,16 +158,16 @@ export default function DailyLog() {
         <div className="card p-4">
           <span className="block text-sm font-bold text-ink">{t('mobility')}</span>
           <div className="mt-2 flex flex-wrap gap-2">
-            {['正常', '稍不穩', '需攙扶', '無法行走'].map(opt => (
+            {MOBILITY_OPTIONS.map(opt => (
               <button
-                key={opt}
+                key={opt.code}
                 type="button"
-                onClick={() => setMobility(opt)}
+                onClick={() => setMobility(opt.code)}
                 className={`rounded-full border px-3 py-1.5 text-xs font-bold ${
-                  mobility === opt ? 'border-primary bg-primary text-white' : 'border-line bg-white text-ink'
+                  mobility === opt.code ? 'border-primary bg-primary text-white' : 'border-line bg-white text-ink'
                 }`}
               >
-                {opt}
+                {t(opt.labelKey as any)}
               </button>
             ))}
           </div>
@@ -153,16 +177,16 @@ export default function DailyLog() {
         <div className="card p-4">
           <span className="block text-sm font-bold text-ink">{t('breathing')}</span>
           <div className="mt-2 flex flex-wrap gap-2">
-            {['正常', '偏急促', '明顯困難'].map(opt => (
+            {BREATHING_OPTIONS.map(opt => (
               <button
-                key={opt}
+                key={opt.code}
                 type="button"
-                onClick={() => setBreathing(opt)}
+                onClick={() => setBreathing(opt.code)}
                 className={`rounded-full border px-3 py-1.5 text-xs font-bold ${
-                  breathing === opt ? 'border-primary bg-primary text-white' : 'border-line bg-white text-ink'
+                  breathing === opt.code ? 'border-primary bg-primary text-white' : 'border-line bg-white text-ink'
                 }`}
               >
-                {opt}
+                {t(opt.labelKey as any)}
               </button>
             ))}
           </div>
@@ -170,10 +194,10 @@ export default function DailyLog() {
 
         {/* Optional fields */}
         <details className="card p-4">
-          <summary className="cursor-pointer text-sm font-bold text-muted">更多欄位 (選填)</summary>
+          <summary className="cursor-pointer text-sm font-bold text-muted">{t('moreFieldsOptional')}</summary>
           <div className="mt-3 space-y-3">
             <label className="block text-sm text-ink">
-              體重 (kg)
+              {t('weightKg')}
               <input
                 type="number"
                 value={weight}
@@ -183,7 +207,7 @@ export default function DailyLog() {
               />
             </label>
             <label className="block text-sm text-ink">
-              體溫 (°C)
+              {t('temperatureC')}
               <input
                 type="number"
                 value={temperature}
@@ -193,12 +217,12 @@ export default function DailyLog() {
               />
             </label>
             <label className="block text-sm text-ink">
-              情緒
+              {t('mood')}
               <input
                 type="text"
                 value={mood}
                 onChange={e => setMood(e.target.value)}
-                placeholder="平靜、焦躁、低落..."
+                placeholder={t('moodPlaceholder')}
                 className="mt-1 w-full rounded-xl border border-line bg-[#FBFCFD] px-3 py-2 text-sm"
               />
             </label>
@@ -208,24 +232,24 @@ export default function DailyLog() {
         {/* Notes */}
         <div className="card p-4">
           <label className="block text-sm font-bold text-ink">
-            備註
+            {t('notes')}
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              placeholder="其他觀察..."
+              placeholder={t('notesPlaceholder')}
               rows={2}
               className="mt-1.5 w-full resize-none rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-sm text-ink"
             />
           </label>
         </div>
 
-        {errorMsg && (
+        {displayError && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-            {errorMsg}
+            {displayError}
           </div>
         )}
 
-        <div className="sticky bottom-20 bg-gradient-to-t from-background pt-4">
+        <div className="sticky bottom-6 bg-gradient-to-t from-background pt-4">
           <button
             type="submit"
             disabled={loading}

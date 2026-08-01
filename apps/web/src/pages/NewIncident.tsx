@@ -79,7 +79,7 @@ export default function NewIncident() {
           🎙
         </button>
         <strong className="mt-3 block text-sm">{t('voiceInput')}</strong>
-        <span className="mt-1 block text-xs text-muted">點一下開始模擬錄音</span>
+        <span className="mt-1 block text-xs text-muted">{t('voiceInputHint')}</span>
       </div>
 
       {/* Text input */}
@@ -87,7 +87,7 @@ export default function NewIncident() {
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
-          placeholder="例如：今天早上不太吃東西，走路不穩，呼吸有點急..."
+          placeholder={t('incidentTextPlaceholder')}
           className="w-full resize-none rounded-2xl border border-line bg-[#FBFCFD] p-3 text-sm text-ink placeholder:text-muted/50"
           rows={4}
         />

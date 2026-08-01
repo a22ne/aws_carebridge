@@ -31,11 +31,27 @@ export interface ElderProfile {
   baselineCognition: string;
 }
 
+/** Profile for a caregiver or contact user within a household */
+export interface UserProfile {
+  name: string;
+  phone: string;
+  /** Only meaningful for contacts — relationship to the elder */
+  relationship?: string;
+  language?: Language;
+  updatedAt?: string;
+}
+
 export interface Household {
   householdId: string;
   joinCode: string;
   elderProfile: ElderProfile;
+  caregiverProfile?: UserProfile;
+  contactProfile?: UserProfile;
+  /** Care guidelines authored by the contact, read-only for the caregiver */
+  careGuidelines?: string;
+  careGuidelinesUpdatedAt?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 // === Incident ===
@@ -193,4 +209,19 @@ export interface CopilotResponse {
   response: string;
   translatedResponse: string | null;
   suggestedFollowUps: string[];
+}
+
+// === Chat (caregiver <-> contact real-time messaging) ===
+
+export interface ChatMessage {
+  messageId: string;
+  householdId: string;
+  senderRole: Role;
+  senderName: string;
+  /** Text exactly as typed by the sender */
+  originalText: string;
+  originalLanguage: Language;
+  /** Bedrock translations keyed by target language */
+  translations: Partial<Record<Language, string>>;
+  createdAt: string;
 }

@@ -43,6 +43,7 @@ Globals:
         DAILY_LOGS_TABLE: !Ref DailyLogsTable
         NOTIFICATIONS_TABLE: !Ref NotificationsTable
         CONVERSATIONS_TABLE: !Ref ConversationsTable
+        CHAT_MESSAGES_TABLE: !Ref ChatMessagesTable
         BEDROCK_MODEL_ID: !Ref BedrockModelId
         BEDROCK_GUARDRAIL_ID: !Ref BedrockGuardrailId
         BEDROCK_GUARDRAIL_VERSION: !Ref BedrockGuardrailVersion
@@ -396,6 +397,44 @@ Resources:
             Path: /households/{householdId}/daily-logs
             Method: GET
 
+  ChatSendFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/chat.send
+      CodeUri: ../services/api/dist/
+      Timeout: 60
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChatMessagesTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /households/{householdId}/chat
+            Method: POST
+
+  ChatListFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/chat.list
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChatMessagesTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /households/{householdId}/chat
+            Method: GET
+
   TrendAlertFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -504,6 +543,22 @@ Resources:
         - AttributeName: conversationId
           KeyType: RANGE
 
+  ChatMessagesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CareBridge-ChatMessages
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: householdId
+          AttributeType: S
+        - AttributeName: messageId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: householdId
+          KeyType: HASH
+        - AttributeName: messageId
+          KeyType: RANGE
+
 Outputs:
   ApiBaseUrl:
     Description: API Gateway endpoint URL
@@ -521,6 +576,8 @@ Outputs:
     Value: !Ref NotificationsTable
   ConversationsTableName:
     Value: !Ref ConversationsTable
+  ChatMessagesTableName:
+    Value: !Ref ChatMessagesTable
   BedrockModelId:
     Value: !Ref BedrockModelId
   GuardrailId:

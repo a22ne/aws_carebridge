@@ -193,4 +193,57 @@ export const zhTW = {
   chronicConditionsLabel: '慢性病 (以逗號分隔)',
   chronicConditionsPlaceholder: '例如：高血壓, 糖尿病',
   otherConditionsPlaceholder: '其他需注意的病徵或狀況...',
+  // Join household
+  joinFamilyTitle: '加入照護家庭',
+  joinFamilyDesc: '請輸入聯絡人提供的家庭代碼',
+  joinCodeLengthError: '請輸入 6 位家庭代碼',
+  joinCodeInvalidError: '代碼無效，請重試',
+  // Loading / status
+  aiAnalyzing: 'AI 分析中...',
+  thinking: '思考中...',
+  reportGenerating: 'AI 正在生成月報...',
+  completed: '完成',
+  sendingMessage: '傳送中...',
+  // Trend
+  trendInsufficientData: '資料不足，需要至少 {min} 天的紀錄才能分析趨勢（目前 {current} 天）。',
+  // Copilot errors
+  copilotErrorCreate: '無法建立對話，請重試。',
+  copilotErrorNoReply: '抱歉，無法取得回覆。',
+  copilotErrorRetryable: '暫時無法回覆，請稍後重試。',
+  copilotErrorNetwork: '連線失敗，請檢查網路。',
+  // Notify errors
+  notifyErrorMissingIncident: '無法送出通知：缺少事件資訊',
+  // Daily log
+  dailyLogDesc: '記錄今日照護情況',
+  dailyLogNoHousehold: '請先加入照護家庭',
+  moreFieldsOptional: '更多欄位 (選填)',
+  weightKg: '體重 (kg)',
+  temperatureC: '體溫 (°C)',
+  namePlaceholder: '請輸入姓名',
+  mood: '情緒',
+  moodPlaceholder: '平靜、焦躁、低落...',
+  notes: '備註',
+  notesPlaceholder: '其他觀察...',
+  mobility_normal: '正常',
+  mobility_slightly_unstable: '稍不穩',
+  mobility_needs_support: '需攙扶',
+  mobility_unable_to_walk: '無法行走',
+  breathing_normal: '正常',
+  breathing_rapid: '偏急促',
+  breathing_difficult: '明顯困難',
+  // Incident
+  voiceInputHint: '點一下開始模擬錄音',
+  incidentTextPlaceholder: '例如：今天早上不太吃東西，走路不穩，呼吸有點急...',
+  // Chat
+  showTranslation: '顯示翻譯',
+  // Profile cards
+  roleCaregiverLabel: '照顧者',
+  roleContactLabel: '聯絡人',
+  you: '你',
+  // Monthly report statistics
+  recordStatistics: '紀錄統計',
+  dailyLogRecords: '日常紀錄',
+  incidentRecords: '異常事件',
+  totalRecords: '總計',
+  rewardBasisNote: '以上紀錄筆數可作為額外獎勵的參考依據。',
 } as const;

@@ -38,13 +38,17 @@ export const create = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
       createdAt: now,
     };
 
-    // Simple AI monitoring: check for combination of abnormals
+    // Language-independent monitoring. Frontend submits stable codes.
+    // Legacy Chinese values are still accepted so old records keep working.
+    const ABNORMAL_MOBILITY = ['needs_support', 'unable_to_walk', '需攙扶', '無法行走', 'unstable'];
+    const ABNORMAL_BREATHING = ['rapid', 'difficult', '偏急促', '明顯困難', 'fast'];
+
     const abnormalCount = [
       meals?.percentage < 30,
       medication?.taken === false,
       sleep?.hours < 4,
-      ['需攙扶', '無法行走', 'unstable'].includes(mobility),
-      ['偏急促', '明顯困難', 'fast', 'difficult'].includes(breathing),
+      ABNORMAL_MOBILITY.includes(mobility),
+      ABNORMAL_BREATHING.includes(breathing),
     ].filter(Boolean).length;
 
     if (abnormalCount >= 2) {

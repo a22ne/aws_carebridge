@@ -5,7 +5,10 @@ import * as api from '@/services/api';
 
 interface Message {
   role: 'user' | 'assistant';
-  content: string;
+  /** Literal text (user input or AI response) */
+  content?: string;
+  /** i18n key — resolved at render time so language switches apply immediately */
+  contentKey?: string;
 }
 
 export default function Copilot() {
@@ -15,10 +18,14 @@ export default function Copilot() {
 
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: t('copilotHello') },
+    { role: 'assistant', contentKey: 'copilotHello' },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Resolve a message to display text
+  const renderMessage = (msg: Message): string =>
+    msg.contentKey ? t(msg.contentKey as any) : (msg.content ?? '');
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -32,7 +39,7 @@ export default function Copilot() {
     const res = await api.createConversation({
       householdId,
       elderId: elderId || 'unknown',
-      language: lang === 'zh-TW' ? 'zh-TW' : lang,
+      language: lang,
       context: 'standalone',
     });
 
@@ -55,7 +62,7 @@ export default function Copilot() {
     try {
       const convId = await ensureConversation();
       if (!convId || !householdId) {
-        setMessages(prev => [...prev, { role: 'assistant', content: '無法建立對話，請重試。' }]);
+        setMessages(prev => [...prev, { role: 'assistant', contentKey: 'copilotErrorCreate' }]);
         setLoading(false);
         return;
       }
@@ -63,28 +70,29 @@ export default function Copilot() {
       const res = await api.sendCopilotMessage(convId, householdId, text.trim());
 
       if (res.success && res.data) {
-        // Strip markdown formatting from AI response
-        const rawResponse = (res.data as any).response || '抱歉，無法取得回覆。';
-        const cleanResponse = rawResponse
-          .replace(/\*\*/g, '')
-          .replace(/\*/g, '')
-          .replace(/^#+\s/gm, '')
-          .replace(/^-\s/gm, '• ');
-        const reply: Message = {
-          role: 'assistant',
-          content: cleanResponse,
-        };
-        setMessages(prev => [...prev, reply]);
+        const rawResponse = (res.data as any).response;
+        if (!rawResponse) {
+          setMessages(prev => [...prev, { role: 'assistant', contentKey: 'copilotErrorNoReply' }]);
+        } else {
+          // Strip markdown formatting from AI response
+          const cleanResponse = rawResponse
+            .replace(/\*\*/g, '')
+            .replace(/\*/g, '')
+            .replace(/^#+\s/gm, '')
+            .replace(/^-\s/gm, '• ');
+          setMessages(prev => [...prev, { role: 'assistant', content: cleanResponse }]);
+        }
+      } else if (res.error?.retryable) {
+        setMessages(prev => [...prev, { role: 'assistant', contentKey: 'copilotErrorRetryable' }]);
       } else {
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: res.error?.retryable
-            ? '暫時無法回覆，請稍後重試。'
-            : (res.error?.message || '發生錯誤'),
+          content: res.error?.message,
+          contentKey: res.error?.message ? undefined : 'error',
         }]);
       }
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: '連線失敗，請檢查網路。' }]);
+      setMessages(prev => [...prev, { role: 'assistant', contentKey: 'copilotErrorNetwork' }]);
     }
 
     setLoading(false);
@@ -112,12 +120,12 @@ export default function Copilot() {
                 : 'ml-auto rounded-br-md bg-primary text-white'
             }`}
           >
-            {msg.content}
+            {renderMessage(msg)}
           </div>
         ))}
         {loading && (
           <div className="max-w-[84%] animate-pulse rounded-2xl rounded-bl-md border border-line bg-white p-3 text-[13px] text-muted">
-            思考中...
+            {t('thinking')}
           </div>
         )}
         <div ref={chatEndRef} />

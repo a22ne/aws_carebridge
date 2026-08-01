@@ -103,22 +103,44 @@ export const get = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProx
   }
 };
 
+function mergeUserProfile(incoming: any, current: any = {}) {
+  return {
+    name: incoming.name ?? current.name ?? '',
+    phone: incoming.phone ?? current.phone ?? '',
+    relationship: incoming.relationship ?? current.relationship ?? '',
+    language: incoming.language ?? current.language ?? 'zh-TW',
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 // PATCH /households/{householdId}
+// Accepts any subset of: elderProfile, caregiverProfile, contactProfile, careGuidelines
 export const update = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   const requestId = event.requestContext?.requestId || generateId();
   try {
     const householdId = event.pathParameters?.householdId;
     const body = JSON.parse(event.body || '{}');
-    const { elderProfile } = body;
+    const { elderProfile, caregiverProfile, contactProfile, careGuidelines } = body;
 
     if (!householdId) {
       return error({ code: 'INVALID_INPUT', message: 'householdId is required', requestId });
     }
-    if (!elderProfile) {
-      return error({ code: 'INVALID_INPUT', message: 'elderProfile is required', requestId });
+
+    const hasUpdate =
+      elderProfile !== undefined ||
+      caregiverProfile !== undefined ||
+      contactProfile !== undefined ||
+      careGuidelines !== undefined;
+
+    if (!hasUpdate) {
+      return error({
+        code: 'INVALID_INPUT',
+        message: 'At least one of elderProfile, caregiverProfile, contactProfile, careGuidelines is required',
+        requestId,
+      });
     }
 
-    // Get existing household to preserve elderId and other fields
+    // Get existing household to preserve untouched fields
     const existing = await db.send(new GetCommand({
       TableName: config.householdsTable,
       Key: { householdId },
@@ -128,36 +150,64 @@ export const update = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
       return error({ code: 'NOT_FOUND', message: 'Household not found', requestId, statusCode: 404 });
     }
 
-    const currentProfile = existing.Item.elderProfile || {};
     const now = new Date().toISOString();
+    const setClauses: string[] = ['updatedAt = :now'];
+    const values: Record<string, unknown> = { ':now': now };
 
-    const updatedProfile = {
-      elderId: currentProfile.elderId || generateId(),
-      displayName: elderProfile.displayName ?? currentProfile.displayName ?? '',
-      age: elderProfile.age !== undefined ? Number(elderProfile.age) : (currentProfile.age ?? 0),
-      birthday: elderProfile.birthday ?? currentProfile.birthday ?? '',
-      city: elderProfile.city ?? currentProfile.city ?? '',
-      gender: elderProfile.gender ?? currentProfile.gender ?? '',
-      chronicConditions: elderProfile.chronicConditions ?? currentProfile.chronicConditions ?? [],
-      otherConditions: elderProfile.otherConditions ?? currentProfile.otherConditions ?? '',
-      medications: elderProfile.medications ?? currentProfile.medications ?? [],
-      allergies: elderProfile.allergies ?? currentProfile.allergies ?? [],
-      baselineMobility: elderProfile.baselineMobility ?? currentProfile.baselineMobility ?? 'unknown',
-      baselineCognition: elderProfile.baselineCognition ?? currentProfile.baselineCognition ?? 'unknown',
-    };
+    if (elderProfile !== undefined) {
+      const current = existing.Item.elderProfile || {};
+      values[':elderProfile'] = {
+        elderId: current.elderId || generateId(),
+        displayName: elderProfile.displayName ?? current.displayName ?? '',
+        age: elderProfile.age !== undefined ? Number(elderProfile.age) : (current.age ?? 0),
+        birthday: elderProfile.birthday ?? current.birthday ?? '',
+        city: elderProfile.city ?? current.city ?? '',
+        gender: elderProfile.gender ?? current.gender ?? '',
+        chronicConditions: elderProfile.chronicConditions ?? current.chronicConditions ?? [],
+        otherConditions: elderProfile.otherConditions ?? current.otherConditions ?? '',
+        medications: elderProfile.medications ?? current.medications ?? [],
+        allergies: elderProfile.allergies ?? current.allergies ?? [],
+        baselineMobility: elderProfile.baselineMobility ?? current.baselineMobility ?? 'unknown',
+        baselineCognition: elderProfile.baselineCognition ?? current.baselineCognition ?? 'unknown',
+      };
+      setClauses.push('elderProfile = :elderProfile');
+    }
+
+    if (caregiverProfile !== undefined) {
+      values[':caregiverProfile'] = mergeUserProfile(caregiverProfile, existing.Item.caregiverProfile);
+      setClauses.push('caregiverProfile = :caregiverProfile');
+    }
+
+    if (contactProfile !== undefined) {
+      values[':contactProfile'] = mergeUserProfile(contactProfile, existing.Item.contactProfile);
+      setClauses.push('contactProfile = :contactProfile');
+    }
+
+    if (careGuidelines !== undefined) {
+      values[':careGuidelines'] = String(careGuidelines);
+      values[':guidelinesUpdatedAt'] = now;
+      setClauses.push('careGuidelines = :careGuidelines');
+      setClauses.push('careGuidelinesUpdatedAt = :guidelinesUpdatedAt');
+    }
 
     const result = await db.send(new UpdateCommand({
       TableName: config.householdsTable,
       Key: { householdId },
-      UpdateExpression: 'SET elderProfile = :profile, updatedAt = :now',
-      ExpressionAttributeValues: {
-        ':profile': updatedProfile,
-        ':now': now,
-      },
+      UpdateExpression: `SET ${setClauses.join(', ')}`,
+      ExpressionAttributeValues: values,
       ReturnValues: 'ALL_NEW',
     }));
 
-    console.log('[Household:update]', { requestId, householdId });
+    console.log('[Household:update]', {
+      requestId,
+      householdId,
+      updated: {
+        elderProfile: elderProfile !== undefined,
+        caregiverProfile: caregiverProfile !== undefined,
+        contactProfile: contactProfile !== undefined,
+        careGuidelines: careGuidelines !== undefined,
+      },
+    });
     return success({ data: result.Attributes, requestId });
   } catch (err) {
     return serverError(requestId, err);

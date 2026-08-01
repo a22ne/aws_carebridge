@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
 import { ElderDetail } from '@/components/ElderDetail';
+import { UserProfileCard } from '@/components/UserProfileCard';
 import * as api from '@/services/api';
-import type { Incident, ElderProfile } from '@carebridge/shared-types';
+import type { Incident, ElderProfile, UserProfile } from '@carebridge/shared-types';
 
 export default function CaregiverHome() {
   const { t } = useI18n();
@@ -13,6 +14,8 @@ export default function CaregiverHome() {
 
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [elderProfile, setElderProfile] = useState<ElderProfile | null>(null);
+  const [caregiverProfile, setCaregiverProfile] = useState<UserProfile | undefined>();
+  const [contactProfile, setContactProfile] = useState<UserProfile | undefined>();
   const [loading, setLoading] = useState(true);
   const [showElderDetail, setShowElderDetail] = useState(false);
 
@@ -22,13 +25,31 @@ export default function CaregiverHome() {
       return;
     }
 
-    // Fetch household (elder profile) and incidents in parallel
     Promise.all([
       api.getHousehold(householdId),
       api.getHouseholdIncidents(householdId),
     ]).then(([householdRes, incidentsRes]) => {
       if (householdRes.success && householdRes.data) {
-        setElderProfile((householdRes.data as any).elderProfile || null);
+        const hh = householdRes.data as any;
+        setElderProfile(hh.elderProfile || null);
+        setCaregiverProfile(hh.caregiverProfile);
+        setContactProfile(hh.contactProfile);
+
+        // Backfill my profile from onboarding if the household has none yet
+        if (!hh.caregiverProfile?.name) {
+          const localName = localStorage.getItem('carebridge-user-name');
+          const localPhone = localStorage.getItem('carebridge-user-phone');
+          if (localName || localPhone) {
+            api.updateUserProfile(householdId, 'caregiver', {
+              name: localName || '',
+              phone: localPhone || '',
+            }).then(res => {
+              if (res.success && res.data) {
+                setCaregiverProfile((res.data as any).caregiverProfile);
+              }
+            });
+          }
+        }
       }
       if (incidentsRes.success && incidentsRes.data) {
         setIncidents(incidentsRes.data as Incident[]);
@@ -36,6 +57,16 @@ export default function CaregiverHome() {
       setLoading(false);
     });
   }, [householdId]);
+
+  const handleMyProfileSave = async (data: { name: string; phone: string }) => {
+    if (!householdId) return;
+    const res = await api.updateUserProfile(householdId, 'caregiver', data);
+    if (res.success && res.data) {
+      setCaregiverProfile((res.data as any).caregiverProfile);
+      localStorage.setItem('carebridge-user-name', data.name);
+      localStorage.setItem('carebridge-user-phone', data.phone);
+    }
+  };
 
   const latestIncident = incidents[0];
 
@@ -61,7 +92,22 @@ export default function CaregiverHome() {
         </div>
       </button>
 
-      {/* AI Risk Alert — only show if there are incidents with risk */}
+      {/* Profile cards: mine (editable) + the other party (read-only) */}
+      <div className="space-y-2">
+        <UserProfileCard
+          profileRole="caregiver"
+          profile={caregiverProfile}
+          editable
+          onSave={handleMyProfileSave}
+        />
+        <UserProfileCard
+          profileRole="contact"
+          profile={contactProfile}
+          editable={false}
+        />
+      </div>
+
+      {/* AI Risk Alert — only when a recent incident carries risk */}
       {latestIncident?.riskLevel && latestIncident.riskLevel !== 'monitor' && (
         <div className="card border-[#F1DDB9] bg-gradient-to-br from-[#FFF7EA] to-white p-4">
           <div className="flex items-center justify-between">
@@ -86,7 +132,7 @@ export default function CaregiverHome() {
         </button>
       </div>
 
-      {/* Latest record — no arrow */}
+      {/* Latest record */}
       {loading ? (
         <div className="card animate-pulse p-4">
           <div className="h-4 w-3/4 rounded bg-line" />
@@ -112,7 +158,7 @@ export default function CaregiverHome() {
         </div>
       )}
 
-      {/* Elder Detail Panel — read-only for caregiver */}
+      {/* Elder Detail Panel — read-only for caregiver (no onSave) */}
       <ElderDetail
         open={showElderDetail}
         onClose={() => setShowElderDetail(false)}

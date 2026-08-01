@@ -94,7 +94,7 @@ export default function Assessment() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <strong>{t('assessmentTitle')}</strong>
-          <span className="text-xs text-muted">完成</span>
+          <span className="text-xs text-muted">{t('completed')}</span>
         </div>
 
         {/* Risk Card */}

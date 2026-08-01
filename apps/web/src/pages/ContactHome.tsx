@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
 import { ElderDetail } from '@/components/ElderDetail';
+import { UserProfileCard } from '@/components/UserProfileCard';
 import * as api from '@/services/api';
-import type { Incident, ElderProfile } from '@carebridge/shared-types';
+import type { Incident, ElderProfile, UserProfile } from '@carebridge/shared-types';
 
 export default function ContactHome() {
   const { t } = useI18n();
@@ -13,10 +14,13 @@ export default function ContactHome() {
 
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [elderProfile, setElderProfile] = useState<ElderProfile | null>(null);
+  const [caregiverProfile, setCaregiverProfile] = useState<UserProfile | undefined>();
+  const [contactProfile, setContactProfile] = useState<UserProfile | undefined>();
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [showElderDetail, setShowElderDetail] = useState(false);
-  const [saveError, setSaveError] = useState('');
+  const [saveErrorKey, setSaveErrorKey] = useState<string | null>(null);
+  const [saveErrorText, setSaveErrorText] = useState('');
 
   useEffect(() => {
     loadData();
@@ -34,7 +38,27 @@ export default function ContactHome() {
     ]);
 
     if (householdRes.success && householdRes.data) {
-      setElderProfile((householdRes.data as any).elderProfile || null);
+      const hh = householdRes.data as any;
+      setElderProfile(hh.elderProfile || null);
+      setCaregiverProfile(hh.caregiverProfile);
+      setContactProfile(hh.contactProfile);
+
+      // Backfill my profile from onboarding if the household has none yet
+      if (!hh.contactProfile?.name) {
+        const localName = localStorage.getItem('carebridge-user-name');
+        const localPhone = localStorage.getItem('carebridge-user-phone');
+        const localRel = localStorage.getItem('carebridge-user-relationship');
+        if (localName || localPhone) {
+          const res = await api.updateUserProfile(householdId, 'contact', {
+            name: localName || '',
+            phone: localPhone || '',
+            relationship: localRel || '',
+          });
+          if (res.success && res.data) {
+            setContactProfile((res.data as any).contactProfile);
+          }
+        }
+      }
     }
     if (incidentsRes.success && incidentsRes.data) {
       setIncidents(incidentsRes.data as Incident[]);
@@ -44,7 +68,8 @@ export default function ContactHome() {
 
   const handleElderSave = async (data: any) => {
     if (!householdId) return;
-    setSaveError('');
+    setSaveErrorKey(null);
+    setSaveErrorText('');
     const res = await api.updateHousehold(householdId, {
       displayName: data.displayName,
       age: data.age,
@@ -58,8 +83,23 @@ export default function ContactHome() {
     if (res.success && res.data) {
       setElderProfile((res.data as any).elderProfile || null);
       setShowElderDetail(false);
+    } else if (res.error?.message) {
+      setSaveErrorText(res.error.message);
     } else {
-      setSaveError(res.error?.message || t('error'));
+      setSaveErrorKey('error');
+    }
+  };
+
+  const handleMyProfileSave = async (data: { name: string; phone: string; relationship?: string }) => {
+    if (!householdId) return;
+    const res = await api.updateUserProfile(householdId, 'contact', data);
+    if (res.success && res.data) {
+      setContactProfile((res.data as any).contactProfile);
+      localStorage.setItem('carebridge-user-name', data.name);
+      localStorage.setItem('carebridge-user-phone', data.phone);
+      if (data.relationship !== undefined) {
+        localStorage.setItem('carebridge-user-relationship', data.relationship);
+      }
     }
   };
 
@@ -81,6 +121,8 @@ export default function ContactHome() {
     { value: 'scheduled', label: t('statusScheduled') },
     { value: 'resolved', label: t('statusResolved') },
   ];
+
+  const displaySaveError = saveErrorKey ? t(saveErrorKey as any) : saveErrorText;
 
   return (
     <div className="space-y-4">
@@ -104,11 +146,26 @@ export default function ContactHome() {
         </div>
       </button>
 
-      {saveError && (
+      {displaySaveError && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-          {saveError}
+          {displaySaveError}
         </div>
       )}
+
+      {/* Profile cards: mine (editable) + the other party (read-only) */}
+      <div className="space-y-2">
+        <UserProfileCard
+          profileRole="contact"
+          profile={contactProfile}
+          editable
+          onSave={handleMyProfileSave}
+        />
+        <UserProfileCard
+          profileRole="caregiver"
+          profile={caregiverProfile}
+          editable={false}
+        />
+      </div>
 
       {/* Household Code */}
       {joinCode && (
@@ -161,7 +218,6 @@ export default function ContactHome() {
                   {new Date(inc.createdAt).toLocaleString()} · {inc.status}
                 </p>
 
-                {/* Status update buttons */}
                 {inc.status !== 'resolved' && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {statusOptions

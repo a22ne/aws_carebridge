@@ -5,6 +5,7 @@ import type {
   DailyLog,
   Notification,
   Conversation,
+  ChatMessage,
   SymptomExtractionResult,
   AssessmentQuestion,
   AssessmentResult,
@@ -64,6 +65,25 @@ export async function updateHousehold(householdId: string, elderProfile: {
   return request<Household>(`/households/${householdId}`, {
     method: 'PATCH',
     body: JSON.stringify({ elderProfile }),
+  });
+}
+
+export async function updateUserProfile(
+  householdId: string,
+  role: 'caregiver' | 'contact',
+  profile: { name?: string; phone?: string; relationship?: string; language?: string }
+) {
+  const key = role === 'caregiver' ? 'caregiverProfile' : 'contactProfile';
+  return request<Household>(`/households/${householdId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ [key]: profile }),
+  });
+}
+
+export async function updateCareGuidelines(householdId: string, careGuidelines: string) {
+  return request<Household>(`/households/${householdId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ careGuidelines }),
   });
 }
 
@@ -173,10 +193,35 @@ export async function getConversation(conversationId: string, householdId: strin
   return request<Conversation>(`/copilot/conversations/${conversationId}?householdId=${householdId}`);
 }
 
+// === Chat (caregiver <-> contact) ===
+
+export async function sendChatMessage(householdId: string, data: {
+  senderRole: 'caregiver' | 'contact';
+  senderName: string;
+  originalText: string;
+  originalLanguage: string;
+}) {
+  return request<ChatMessage>(`/households/${householdId}/chat`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getChatMessages(householdId: string, limit = 100) {
+  return request<ChatMessage[]>(`/households/${householdId}/chat?limit=${limit}`);
+}
+
 // === Trends ===
 
+export interface TrendAlertResponse {
+  hasEnoughData: boolean;
+  minimumDaysRequired: number;
+  currentDays: number;
+  alertText: string | null;
+}
+
 export async function getTrendAlert(householdId: string, language?: string) {
-  return request<{ alertText: string }>(`/trends/${householdId}/alert`, {
+  return request<TrendAlertResponse>(`/trends/${householdId}/alert`, {
     method: 'POST',
     body: JSON.stringify({ language: language || 'zh-TW' }),
   });

@@ -42,18 +42,26 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
 
     if (items.length < 3) {
       return success({
-        data: { alertText: '資料不足，需要至少 3 天的紀錄才能分析趨勢。' },
+        data: {
+          hasEnoughData: false,
+          minimumDaysRequired: 3,
+          currentDays: items.length,
+          alertText: null,
+        },
         requestId,
       });
     }
 
-    // Summarize logs for Bedrock
+    // Summarize logs for Bedrock. Mobility/breathing are stable codes.
     const summary = items.map((log: any) => ({
       date: log.date,
       mealPct: log.meals?.percentage,
+      medicationTaken: log.medication?.taken,
       sleepHours: log.sleep?.hours,
       mobility: log.mobility,
       breathing: log.breathing,
+      weight: log.weight,
+      temperature: log.temperature,
       aiAlert: log.aiAlertTriggered,
     }));
 
@@ -64,7 +72,15 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     });
 
     console.log('[Trend]', { requestId, householdId, logsAnalyzed: items.length });
-    return success({ data: { alertText }, requestId });
+    return success({
+      data: {
+        hasEnoughData: true,
+        minimumDaysRequired: 3,
+        currentDays: items.length,
+        alertText,
+      },
+      requestId,
+    });
   } catch (err) {
     return serverError(requestId, err);
   }

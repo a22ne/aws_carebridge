@@ -8,7 +8,10 @@ interface Recipient {
   id: string;
   name: string;
   phone: string;
-  role: string;
+  /** Literal role text entered by user */
+  role?: string;
+  /** i18n key — resolved at render time */
+  roleKey?: string;
   enabled: boolean;
 }
 
@@ -23,7 +26,8 @@ export default function Notify() {
 
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorKey, setErrorKey] = useState<string | null>(null);
+  const [errorText, setErrorText] = useState('');
   const [incidentData, setIncidentData] = useState<any>(null);
 
   // Fetch incident data for summary
@@ -42,7 +46,14 @@ export default function Notify() {
   const contactRelation = localStorage.getItem('carebridge-user-relationship') || '';
 
   const [recipients, setRecipients] = useState<Recipient[]>([
-    { id: '1', name: contactName, phone: contactPhone, role: contactRelation || t('family'), enabled: true },
+    {
+      id: '1',
+      name: contactName,
+      phone: contactPhone,
+      role: contactRelation || undefined,
+      roleKey: contactRelation ? undefined : 'family',
+      enabled: true,
+    },
   ]);
 
   const [showAdd, setShowAdd] = useState(false);
@@ -50,13 +61,17 @@ export default function Notify() {
   const [newPhone, setNewPhone] = useState('');
   const [newRole, setNewRole] = useState('');
 
+  const renderRole = (r: Recipient): string =>
+    r.roleKey ? t(r.roleKey as any) : (r.role ?? '');
+
   const addRecipient = () => {
     if (!newName.trim() || !newPhone.trim()) return;
     setRecipients(prev => [...prev, {
       id: Date.now().toString(),
       name: newName.trim(),
       phone: newPhone.trim(),
-      role: newRole.trim() || t('careOrg'),
+      role: newRole.trim() || undefined,
+      roleKey: newRole.trim() ? undefined : 'careOrg',
       enabled: true,
     }]);
     setNewName('');
@@ -71,17 +86,21 @@ export default function Notify() {
 
   const handleSend = async () => {
     if (!incidentId || !hhId) {
-      setErrorMsg('無法送出通知：缺少事件資訊');
+      setErrorKey('notifyErrorMissingIncident');
+      setErrorText('');
       return;
     }
     setLoading(true);
-    setErrorMsg('');
+    setErrorKey(null);
+    setErrorText('');
 
     const res = await api.notifyContacts(incidentId, hhId);
     if (res.success) {
       setSent(true);
+    } else if (res.error?.message) {
+      setErrorText(res.error.message);
     } else {
-      setErrorMsg(res.error?.message || t('error'));
+      setErrorKey('error');
     }
     setLoading(false);
   };
@@ -89,6 +108,8 @@ export default function Notify() {
   const handleCall = (phone: string) => {
     window.open(`tel:${phone}`, '_self');
   };
+
+  const displayError = errorKey ? t(errorKey as any) : errorText;
 
   if (sent) {
     return (
@@ -142,13 +163,13 @@ export default function Notify() {
             <div key={r.id} className="card flex items-center justify-between p-3">
               <div className="flex-1">
                 <strong className="text-sm">{r.name}</strong>
-                <span className="block text-[11px] text-muted">{r.role} · {r.phone}</span>
+                <span className="block text-[11px] text-muted">{renderRole(r)} · {r.phone}</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleCall(r.phone)}
                   className="text-sm text-primary"
-                  title="Call"
+                  aria-label={t('callContact')}
                 >
                   📞
                 </button>
@@ -157,6 +178,7 @@ export default function Notify() {
                   className={`h-6 w-11 rounded-full p-0.5 transition-colors ${
                     r.enabled ? 'bg-accent' : 'bg-[#DDE5E8]'
                   }`}
+                  aria-label={r.name}
                 >
                   <div className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
                     r.enabled ? 'translate-x-5' : 'translate-x-0'
@@ -219,9 +241,9 @@ export default function Notify() {
         </div>
       </div>
 
-      {errorMsg && (
+      {displayError && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-          {errorMsg}
+          {displayError}
         </div>
       )}
     </div>

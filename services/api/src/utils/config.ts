@@ -19,6 +19,7 @@ export const config = {
   dailyLogsTable: requireEnv('DAILY_LOGS_TABLE'),
   notificationsTable: requireEnv('NOTIFICATIONS_TABLE'),
   conversationsTable: requireEnv('CONVERSATIONS_TABLE'),
+  chatMessagesTable: requireEnv('CHAT_MESSAGES_TABLE'),
 
   // Bedrock
   bedrockModelId: requireEnv('BEDROCK_MODEL_ID'),
