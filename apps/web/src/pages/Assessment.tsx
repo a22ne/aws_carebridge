@@ -99,23 +99,24 @@ export default function Assessment() {
 
         {/* Risk Card */}
         <div className={`card p-4 ${riskColors[result.riskLevel] || ''}`}>
-          <h3 className="text-lg font-bold capitalize">{result.riskLevel}</h3>
+          <h3 className="text-lg font-bold capitalize">{t(`risk_${result.riskLevel}` as any) || result.riskLevel}</h3>
           <div className="mt-2 space-y-2 text-xs">
             {result.confirmedFacts.length > 0 && (
               <div>
-                <strong className="text-muted">已確認：</strong>
+                <strong className="text-muted">{t('confirmedFacts')}：</strong>
                 <span>{result.confirmedFacts.join('、')}</span>
               </div>
             )}
             {result.missingInformation.length > 0 && (
               <div>
-                <strong className="text-muted">尚未確認：</strong>
+                <strong className="text-muted">{t('unconfirmedInfo')}：</strong>
                 <span>{result.missingInformation.join('、')}</span>
               </div>
             )}
             {result.escalationWarnings.length > 0 && (
-              <div className="font-bold text-red-600">
-                ⚠ {result.escalationWarnings.join('、')}
+              <div className="mt-2 rounded-xl bg-red-50 p-2 text-red-700">
+                <strong>⚠ {t('escalationWarning')}：</strong>
+                <span>{result.escalationWarnings.join('、')}</span>
               </div>
             )}
           </div>
@@ -123,9 +124,9 @@ export default function Assessment() {
 
         {/* Actions */}
         <div className="space-y-2 text-xs">
-          <strong>建議行動：</strong>
+          <strong>{t('recommendedActions')}：</strong>
           <ul className="list-inside list-disc text-muted">
-            {result.recommendedActions.map((a, i) => <li key={i}>{a}</li>)}
+            {result.recommendedActions.map((a, i) => <li key={i}>{t(`action_${a}` as any) || a}</li>)}
           </ul>
         </div>
 

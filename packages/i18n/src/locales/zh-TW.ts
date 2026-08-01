@@ -169,4 +169,19 @@ export const zhTW = {
   addRecipient: '新增通報對象',
   notifyMethod: '通報方式',
   rolePlaceholder: '例如：長照機構、個管師',
+  // Assessment result labels
+  confirmedFacts: '已確認',
+  unconfirmedInfo: '尚未確認',
+  escalationWarning: '以下緊急狀況已被觸發',
+  recommendedActions: '建議行動',
+  risk_emergency: '緊急',
+  risk_urgent: '需儘速處理',
+  risk_attention: '需留意',
+  risk_monitor: '持續觀察',
+  action_CALL_EMERGENCY: '請立即撥打 119 或當地緊急救護電話',
+  action_SEEK_MEDICAL_EVALUATION: '建議儘快安排醫療評估（診所或醫院）',
+  action_SCHEDULE_EVALUATION: '建議近日安排就醫檢查',
+  // Copilot suggested questions
+  suggestedQ1: '長者今天都不吃東西怎麼辦？',
+  suggestedQ2: '需要送醫嗎？',
 } as const;

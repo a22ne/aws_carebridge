@@ -13,14 +13,18 @@ Rules:
 - Suggest increasing monitoring frequency if concerning.
 - Do NOT diagnose.
 - Keep it concise (2-3 sentences).
-- Output in Traditional Chinese (zh-TW).
-- If data is insufficient, say so clearly.`;
+- Output in the language specified by the user.
+- Do NOT use markdown formatting.
+- If data is insufficient, say so clearly in the user's language.`;
 
 // POST /trends/{householdId}/alert
 export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
   const requestId = event.requestContext?.requestId || generateId();
   try {
     const householdId = event.pathParameters?.householdId;
+    const body = JSON.parse(event.body || '{}');
+    const language = body.language || 'zh-TW';
+
     if (!householdId) {
       return error({ code: 'INVALID_INPUT', message: 'householdId is required', requestId });
     }
@@ -55,7 +59,7 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
 
     const alertText = await converse({
       systemPrompt: TREND_SYSTEM_PROMPT,
-      userMessage: `Analyze these recent daily care logs (newest first):\n${JSON.stringify(summary, null, 2)}`,
+      userMessage: `User language: ${language}\n\nAnalyze these recent daily care logs (newest first):\n${JSON.stringify(summary, null, 2)}`,
       maxTokens: 300,
     });
 

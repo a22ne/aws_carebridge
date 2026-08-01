@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
@@ -24,6 +24,17 @@ export default function Notify() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [incidentData, setIncidentData] = useState<any>(null);
+
+  // Fetch incident data for summary
+  useEffect(() => {
+    if (!incidentId || !hhId) return;
+    api.getIncident(incidentId, hhId).then(res => {
+      if (res.success && res.data) {
+        setIncidentData(res.data);
+      }
+    });
+  }, [incidentId, hhId]);
 
   // Editable recipients
   const contactName = localStorage.getItem('carebridge-user-name') || '';
@@ -110,15 +121,15 @@ export default function Notify() {
         <div className="space-y-2 text-[13px]">
           <div className="grid grid-cols-[80px_1fr] gap-2 border-t border-line pt-2">
             <span className="font-bold text-muted">{t('symptoms')}</span>
-            <span>{t('noData')}</span>
+            <span>{incidentData?.extractedSymptoms?.filter((s: any) => s.status === 'present').map((s: any) => s.label).join('、') || t('noData')}</span>
           </div>
           <div className="grid grid-cols-[80px_1fr] gap-2 border-t border-line pt-2">
             <span className="font-bold text-muted">{t('risk')}</span>
-            <span>{t('noData')}</span>
+            <span>{incidentData?.riskLevel ? t(`risk_${incidentData.riskLevel}` as any) || incidentData.riskLevel : t('noData')}</span>
           </div>
           <div className="grid grid-cols-[80px_1fr] gap-2 border-t border-line pt-2">
             <span className="font-bold text-muted">{t('suggest')}</span>
-            <span>{t('noData')}</span>
+            <span>{incidentData?.recommendedActions?.map((a: string) => t(`action_${a}` as any) || a).join('、') || t('noData')}</span>
           </div>
         </div>
       </div>

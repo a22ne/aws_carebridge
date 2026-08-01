@@ -4,7 +4,7 @@ import { useAppState } from '@/hooks/useAppState';
 import * as api from '@/services/api';
 
 export default function Trends() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { householdId } = useAppState();
 
   const [alertText, setAlertText] = useState<string | null>(null);
@@ -14,7 +14,7 @@ export default function Trends() {
   useEffect(() => {
     if (!householdId) return;
     setAlertLoading(true);
-    api.getTrendAlert(householdId).then(res => {
+    api.getTrendAlert(householdId, lang).then(res => {
       if (res.success && res.data) {
         const text = (res.data as any).alertText;
         setAlertText(text);

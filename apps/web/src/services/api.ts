@@ -156,8 +156,9 @@ export async function getConversation(conversationId: string, householdId: strin
 
 // === Trends ===
 
-export async function getTrendAlert(householdId: string) {
+export async function getTrendAlert(householdId: string, language?: string) {
   return request<{ alertText: string }>(`/trends/${householdId}/alert`, {
     method: 'POST',
+    body: JSON.stringify({ language: language || 'zh-TW' }),
   });
 }

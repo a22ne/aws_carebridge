@@ -63,9 +63,16 @@ export default function Copilot() {
       const res = await api.sendCopilotMessage(convId, householdId, text.trim());
 
       if (res.success && res.data) {
+        // Strip markdown formatting from AI response
+        const rawResponse = (res.data as any).response || '抱歉，無法取得回覆。';
+        const cleanResponse = rawResponse
+          .replace(/\*\*/g, '')
+          .replace(/\*/g, '')
+          .replace(/^#+\s/gm, '')
+          .replace(/^-\s/gm, '• ');
         const reply: Message = {
           role: 'assistant',
-          content: (res.data as any).response || '抱歉，無法取得回覆。',
+          content: cleanResponse,
         };
         setMessages(prev => [...prev, reply]);
       } else {
@@ -119,16 +126,16 @@ export default function Copilot() {
       {/* Suggested questions */}
       <div className="flex gap-2 overflow-auto pb-2">
         <button
-          onClick={() => send('長者今天都不吃東西怎麼辦？')}
+          onClick={() => send(t('suggestedQ1'))}
           className="whitespace-nowrap rounded-full border border-line bg-white px-3 py-1.5 text-xs font-bold text-primary-dark"
         >
-          長者今天都不吃東西怎麼辦？
+          {t('suggestedQ1')}
         </button>
         <button
-          onClick={() => send('需要送醫嗎？')}
+          onClick={() => send(t('suggestedQ2'))}
           className="whitespace-nowrap rounded-full border border-line bg-white px-3 py-1.5 text-xs font-bold text-primary-dark"
         >
-          需要送醫嗎？
+          {t('suggestedQ2')}
         </button>
       </div>
 
