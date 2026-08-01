@@ -1,0 +1,29 @@
+{
+  "name": "carebridge-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CareBridge AI — AI Cross-Language Care Coordination Platform",
+  "workspaces": [
+    "apps/web",
+    "services/api",
+    "packages/shared-types",
+    "packages/i18n",
+    "packages/clinical-rules"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build:api": "npm run build --workspace=services/api",
+    "sam:build": "cd infrastructure && sam build",
+    "sam:deploy": "cd infrastructure && sam deploy",
+    "sam:local": "cd infrastructure && sam local start-api"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "packageManager": "npm@10.0.0"
+}

@@ -1,0 +1,230 @@
+[
+  {
+    "ruleId": "RF-001",
+    "title": "無法喚醒",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "unresponsive", "operator": "equals", "value": "present", "unknownBehavior": "conservative" }
+    ],
+    "riskLevel": "emergency",
+    "actionCode": "CALL_EMERGENCY",
+    "sourceTitle": "衛福部緊急醫療救護法",
+    "sourceUrl": "https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=L0020045",
+    "publishedAt": "2024-01-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "RF-002",
+    "title": "意識明顯改變",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "consciousness_change", "operator": "equals", "value": "present", "unknownBehavior": "conservative" }
+    ],
+    "riskLevel": "emergency",
+    "actionCode": "CALL_EMERGENCY",
+    "sourceTitle": "台灣急診醫學會急性意識改變指引",
+    "sourceUrl": "https://www.sem.org.tw/",
+    "publishedAt": "2023-06-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "RF-003",
+    "title": "嚴重呼吸困難",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "severe_dyspnea", "operator": "equals", "value": "present", "unknownBehavior": "conservative" }
+    ],
+    "riskLevel": "emergency",
+    "actionCode": "CALL_EMERGENCY",
+    "sourceTitle": "AHA/ATS Dyspnea Management Guidelines",
+    "sourceUrl": "https://www.thoracic.org/",
+    "publishedAt": "2022-03-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "RF-004",
+    "title": "嘴唇或皮膚發青（發紺）",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "cyanosis", "operator": "equals", "value": "present", "unknownBehavior": "conservative" }
+    ],
+    "riskLevel": "emergency",
+    "actionCode": "CALL_EMERGENCY",
+    "sourceTitle": "WHO Emergency Triage Assessment",
+    "sourceUrl": "https://www.who.int/publications/i/item/9789241510219",
+    "publishedAt": "2016-01-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "RF-005",
+    "title": "持續胸痛",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "chest_pain_persistent", "operator": "equals", "value": "present", "unknownBehavior": "conservative" }
+    ],
+    "riskLevel": "emergency",
+    "actionCode": "CALL_EMERGENCY",
+    "sourceTitle": "AHA Chest Pain Guidelines 2021",
+    "sourceUrl": "https://www.ahajournals.org/doi/10.1161/CIR.0000000000001029",
+    "publishedAt": "2021-11-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "RF-006",
+    "title": "疑似中風 FAST 徵象",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "stroke_fast_signs", "operator": "equals", "value": "present", "unknownBehavior": "conservative" }
+    ],
+    "riskLevel": "emergency",
+    "actionCode": "CALL_EMERGENCY",
+    "sourceTitle": "ASA/AHA Stroke Guidelines 2019",
+    "sourceUrl": "https://www.ahajournals.org/doi/10.1161/STR.0000000000000211",
+    "publishedAt": "2019-12-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "RF-007",
+    "title": "大量出血",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "major_bleeding", "operator": "equals", "value": "present", "unknownBehavior": "conservative" }
+    ],
+    "riskLevel": "emergency",
+    "actionCode": "CALL_EMERGENCY",
+    "sourceTitle": "WHO Basic Emergency Care",
+    "sourceUrl": "https://www.who.int/publications/i/item/basic-emergency-care",
+    "publishedAt": "2018-01-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "RF-008",
+    "title": "跌倒後失去意識",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "fall", "operator": "equals", "value": "present", "unknownBehavior": "skip" },
+      { "symptomCode": "consciousness_change", "operator": "equals", "value": "present", "unknownBehavior": "conservative" }
+    ],
+    "riskLevel": "emergency",
+    "actionCode": "CALL_EMERGENCY",
+    "sourceTitle": "NICE Head Injury Guidelines",
+    "sourceUrl": "https://www.nice.org.uk/guidance/ng232",
+    "publishedAt": "2023-05-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "RF-009",
+    "title": "抽搐",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "seizure", "operator": "equals", "value": "present", "unknownBehavior": "conservative" }
+    ],
+    "riskLevel": "emergency",
+    "actionCode": "CALL_EMERGENCY",
+    "sourceTitle": "ILAE Seizure First Aid Guidelines",
+    "sourceUrl": "https://www.ilae.org/",
+    "publishedAt": "2020-01-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "RF-010",
+    "title": "突然無法站立或行走",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "sudden_immobility", "operator": "equals", "value": "present", "unknownBehavior": "conservative" }
+    ],
+    "riskLevel": "urgent",
+    "actionCode": "SEEK_MEDICAL_EVALUATION",
+    "sourceTitle": "AGS Falls Prevention Guidelines",
+    "sourceUrl": "https://geriatricscareonline.org/",
+    "publishedAt": "2022-06-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "CH-001",
+    "title": "高血壓急性惡化",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "hypertension_crisis", "operator": "equals", "value": "present", "unknownBehavior": "skip" }
+    ],
+    "riskLevel": "urgent",
+    "actionCode": "SEEK_MEDICAL_EVALUATION",
+    "sourceTitle": "台灣高血壓學會治療指引",
+    "sourceUrl": "https://www.ths.org.tw/",
+    "publishedAt": "2022-01-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "CH-002",
+    "title": "嚴重低血糖症狀",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "severe_hypoglycemia", "operator": "equals", "value": "present", "unknownBehavior": "conservative" }
+    ],
+    "riskLevel": "urgent",
+    "actionCode": "SEEK_MEDICAL_EVALUATION",
+    "sourceTitle": "ADA Standards of Care in Diabetes 2024",
+    "sourceUrl": "https://diabetesjournals.org/care",
+    "publishedAt": "2024-01-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "CH-003",
+    "title": "COPD 急性惡化",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "dyspnea_worsening", "operator": "equals", "value": "present", "unknownBehavior": "skip" },
+      { "symptomCode": "sputum_increase", "operator": "equals", "value": "present", "unknownBehavior": "skip" }
+    ],
+    "riskLevel": "urgent",
+    "actionCode": "SEEK_MEDICAL_EVALUATION",
+    "sourceTitle": "GOLD COPD Report 2024",
+    "sourceUrl": "https://goldcopd.org/",
+    "publishedAt": "2024-01-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "CH-004",
+    "title": "心律不整伴隨頭暈",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "irregular_pulse", "operator": "equals", "value": "present", "unknownBehavior": "skip" },
+      { "symptomCode": "dizziness", "operator": "equals", "value": "present", "unknownBehavior": "skip" }
+    ],
+    "riskLevel": "urgent",
+    "actionCode": "SEEK_MEDICAL_EVALUATION",
+    "sourceTitle": "ESC Atrial Fibrillation Guidelines 2020",
+    "sourceUrl": "https://www.escardio.org/Guidelines",
+    "publishedAt": "2020-08-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  },
+  {
+    "ruleId": "CH-005",
+    "title": "糖尿病足部傷口感染徵象",
+    "version": "1.0",
+    "conditions": [
+      { "symptomCode": "diabetic_foot_infection", "operator": "equals", "value": "present", "unknownBehavior": "skip" }
+    ],
+    "riskLevel": "attention",
+    "actionCode": "SCHEDULE_EVALUATION",
+    "sourceTitle": "IWGDF Guidelines on Diabetic Foot 2023",
+    "sourceUrl": "https://iwgdfguidelines.org/",
+    "publishedAt": "2023-05-01",
+    "reviewedAt": "2026-08-01",
+    "status": "active"
+  }
+]

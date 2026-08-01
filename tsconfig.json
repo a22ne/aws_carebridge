@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@carebridge/shared-types": ["packages/shared-types/src/index.ts"],
+      "@carebridge/i18n": ["packages/i18n/src/index.ts"],
+      "@carebridge/clinical-rules": ["packages/clinical-rules/src/index.ts"]
+    }
+  },
+  "references": [
+    { "path": "apps/web" },
+    { "path": "services/api" },
+    { "path": "packages/shared-types" },
+    { "path": "packages/i18n" },
+    { "path": "packages/clinical-rules" }
+  ],
+  "exclude": ["node_modules", "dist", ".aws-sam"]
+}

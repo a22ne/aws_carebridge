@@ -1,0 +1,513 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: CareBridge AI — Backend Infrastructure
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: prod
+    AllowedValues: [dev, prod]
+    Description: Deployment environment name
+  BedrockModelId:
+    Type: String
+    Default: us.anthropic.claude-sonnet-4-20250514-v1:0
+    Description: Bedrock model or inference profile ID
+  BedrockGuardrailId:
+    Type: String
+    Default: ''
+    Description: Bedrock Guardrail ID (set after guardrail creation)
+  BedrockGuardrailVersion:
+    Type: String
+    Default: DRAFT
+    Description: Bedrock Guardrail version
+  AllowedOrigins:
+    Type: String
+    Default: '*'
+    Description: Comma-separated allowed CORS origins (set Amplify URL for production)
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues: [DEBUG, INFO, WARN, ERROR]
+    Description: Application log level
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Timeout: 30
+    MemorySize: 256
+    Environment:
+      Variables:
+        APP_ENV: !Ref EnvironmentName
+        HOUSEHOLDS_TABLE: !Ref HouseholdsTable
+        INCIDENTS_TABLE: !Ref IncidentsTable
+        DAILY_LOGS_TABLE: !Ref DailyLogsTable
+        NOTIFICATIONS_TABLE: !Ref NotificationsTable
+        CONVERSATIONS_TABLE: !Ref ConversationsTable
+        BEDROCK_MODEL_ID: !Ref BedrockModelId
+        BEDROCK_GUARDRAIL_ID: !Ref BedrockGuardrailId
+        BEDROCK_GUARDRAIL_VERSION: !Ref BedrockGuardrailVersion
+        LOG_LEVEL: !Ref LogLevel
+
+Resources:
+  # === API Gateway ===
+  CareBridgeApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref EnvironmentName
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - PATCH
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+          - X-Request-Id
+        AllowOrigins:
+          - !Ref AllowedOrigins
+
+  # === Lambda Functions ===
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/health.handler
+      CodeUri: ../services/api/dist/
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /health
+            Method: GET
+
+  HouseholdCreateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/household.create
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref HouseholdsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /households
+            Method: POST
+
+  HouseholdJoinFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/household.join
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref HouseholdsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /households/join
+            Method: POST
+
+  HouseholdGetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/household.get
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref HouseholdsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /households/{householdId}
+            Method: GET
+
+  IncidentCreateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/incident.create
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IncidentsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /incidents
+            Method: POST
+
+  IncidentGetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/incident.get
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IncidentsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /incidents/{incidentId}
+            Method: GET
+
+  IncidentListFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/incident.list
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IncidentsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /households/{householdId}/incidents
+            Method: GET
+
+  IncidentStatusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/incident.updateStatus
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IncidentsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /incidents/{incidentId}/status
+            Method: PATCH
+
+  ExtractFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/extract.handler
+      CodeUri: ../services/api/dist/
+      Timeout: 60
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IncidentsTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /incidents/{incidentId}/extract
+            Method: POST
+
+  AnswerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/answer.handler
+      CodeUri: ../services/api/dist/
+      Timeout: 60
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IncidentsTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /incidents/{incidentId}/answer
+            Method: POST
+
+  AssessFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/assess.handler
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IncidentsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /incidents/{incidentId}/assess
+            Method: POST
+
+  NotifyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/notify.handler
+      CodeUri: ../services/api/dist/
+      Timeout: 60
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IncidentsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref NotificationsTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /incidents/{incidentId}/notify
+            Method: POST
+
+  CopilotCreateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/copilot.createConversation
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConversationsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /copilot/conversations
+            Method: POST
+
+  CopilotMessageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/copilot.sendMessage
+      CodeUri: ../services/api/dist/
+      Timeout: 60
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConversationsTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:ApplyGuardrail
+              Resource: '*'
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /copilot/conversations/{conversationId}/messages
+            Method: POST
+
+  CopilotGetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/copilot.getConversation
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConversationsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /copilot/conversations/{conversationId}
+            Method: GET
+
+  CopilotListFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/copilot.listConversations
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConversationsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /households/{householdId}/conversations
+            Method: GET
+
+  DailyLogCreateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/dailyLog.create
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DailyLogsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /daily-logs
+            Method: POST
+
+  DailyLogListFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/dailyLog.list
+      CodeUri: ../services/api/dist/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DailyLogsTable
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /households/{householdId}/daily-logs
+            Method: GET
+
+  TrendAlertFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/trend.handler
+      CodeUri: ../services/api/dist/
+      Timeout: 60
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DailyLogsTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CareBridgeApi
+            Path: /trends/{householdId}/alert
+            Method: POST
+
+  # === DynamoDB Tables ===
+  HouseholdsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CareBridge-Households
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: householdId
+          AttributeType: S
+        - AttributeName: joinCode
+          AttributeType: S
+      KeySchema:
+        - AttributeName: householdId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: JoinCodeIndex
+          KeySchema:
+            - AttributeName: joinCode
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  IncidentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CareBridge-Incidents
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: householdId
+          AttributeType: S
+        - AttributeName: incidentId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: householdId
+          KeyType: HASH
+        - AttributeName: incidentId
+          KeyType: RANGE
+
+  DailyLogsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CareBridge-DailyLogs
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: householdId
+          AttributeType: S
+        - AttributeName: logId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: householdId
+          KeyType: HASH
+        - AttributeName: logId
+          KeyType: RANGE
+
+  NotificationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CareBridge-Notifications
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: householdId
+          AttributeType: S
+        - AttributeName: notificationId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: householdId
+          KeyType: HASH
+        - AttributeName: notificationId
+          KeyType: RANGE
+
+  ConversationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CareBridge-Conversations
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: householdId
+          AttributeType: S
+        - AttributeName: conversationId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: householdId
+          KeyType: HASH
+        - AttributeName: conversationId
+          KeyType: RANGE
+
+Outputs:
+  ApiBaseUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${CareBridgeApi}.execute-api.${AWS::Region}.amazonaws.com/${EnvironmentName}'
+  AWSRegion:
+    Description: Deployed AWS region
+    Value: !Ref AWS::Region
+  HouseholdsTableName:
+    Value: !Ref HouseholdsTable
+  IncidentsTableName:
+    Value: !Ref IncidentsTable
+  DailyLogsTableName:
+    Value: !Ref DailyLogsTable
+  NotificationsTableName:
+    Value: !Ref NotificationsTable
+  ConversationsTableName:
+    Value: !Ref ConversationsTable
+  BedrockModelId:
+    Value: !Ref BedrockModelId
+  GuardrailId:
+    Value: !Ref BedrockGuardrailId
+  GuardrailVersion:
+    Value: !Ref BedrockGuardrailVersion

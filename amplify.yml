@@ -1,0 +1,31 @@
+version: 1
+applications:
+  - appRoot: apps/web
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - cd ../..
+            - npm ci
+        build:
+          commands:
+            - cd apps/web
+            - npm run build
+      artifacts:
+        baseDirectory: dist
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - ../../node_modules/**/*
+    customHeaders:
+      - pattern: '**/*'
+        headers:
+          - key: X-Frame-Options
+            value: DENY
+          - key: X-Content-Type-Options
+            value: nosniff
+    rewrites:
+      - source: '</^[^.]+$|\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp)$)([^.]+$)/>'
+        target: /index.html
+        status: '200'

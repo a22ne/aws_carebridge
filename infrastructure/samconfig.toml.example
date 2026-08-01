@@ -1,0 +1,14 @@
+# CareBridge AI — SAM Configuration
+# Copy to samconfig.toml and update values
+# NEVER commit samconfig.toml (contains account-specific info)
+
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "carebridge-ai"
+resolve_s3 = true
+s3_prefix = "carebridge-ai"
+region = "us-west-2"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "EnvironmentName=prod BedrockModelId=us.anthropic.claude-sonnet-4-20250514-v1:0 AllowedOrigins=* LogLevel=INFO BedrockGuardrailId= BedrockGuardrailVersion=DRAFT"
