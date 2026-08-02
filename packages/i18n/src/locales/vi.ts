@@ -119,6 +119,7 @@ export const vi = {
   statusContacted: 'Đã liên hệ',
   statusScheduled: 'Đã lên lịch',
   statusResolved: 'Đã giải quyết',
+  back: 'Quay lại',
   backHome: 'Về trang chủ',
   retry: 'Thử lại',
   loading: 'Đang tải...',

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
+import { BackButton } from '@/components/BackButton';
 import * as api from '@/services/api';
 
 export default function ElderSetup() {
@@ -50,7 +51,6 @@ export default function ElderSetup() {
   return (
     <div className="flex min-h-screen flex-col bg-background p-6">
       <div className="mb-6">
-        <button onClick={() => navigate(-1)} className="mb-3 text-lg">←</button>
         <h1 className="text-2xl font-bold text-ink">{t('createFamilyTitle')}</h1>
         <p className="mt-1 text-sm text-muted">{t('createFamilyDesc')}</p>
       </div>
@@ -168,6 +168,8 @@ export default function ElderSetup() {
         >
           {loading ? t('loading') : t('confirm')}
         </button>
+
+        <BackButton />
       </form>
     </div>
   );

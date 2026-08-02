@@ -154,6 +154,7 @@ export const zhTW = {
   statusResolved: '已處理',
 
   // Common
+  back: '返回上一頁',
   backHome: '回到首頁',
   retry: '重試',
   loading: '載入中...',

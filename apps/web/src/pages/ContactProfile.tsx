@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
+import { BackButton } from '@/components/BackButton';
 
 export default function ContactProfile() {
   const { t } = useI18n();
@@ -23,7 +24,6 @@ export default function ContactProfile() {
   return (
     <div className="flex min-h-screen flex-col bg-background p-6">
       <div className="mb-6">
-        <button onClick={() => navigate(-1)} className="mb-3 text-lg">←</button>
         <h1 className="text-2xl font-bold text-ink">{t('contactProfileTitle')}</h1>
         <p className="mt-1 text-sm text-muted">{t('contactProfileDesc')}</p>
       </div>
@@ -77,6 +77,8 @@ export default function ContactProfile() {
         >
           {t('next')}
         </button>
+
+        <BackButton />
       </form>
     </div>
   );

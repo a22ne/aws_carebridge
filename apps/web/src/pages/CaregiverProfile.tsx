@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
+import { BackButton } from '@/components/BackButton';
 
 export default function CaregiverProfile() {
   const { t } = useI18n();
@@ -61,6 +62,8 @@ export default function CaregiverProfile() {
         >
           {t('next')}
         </button>
+
+        <BackButton />
       </form>
     </div>
   );

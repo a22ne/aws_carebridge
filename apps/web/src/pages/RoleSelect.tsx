@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
+import { BackButton } from '@/components/BackButton';
 import type { Role } from '@carebridge/shared-types';
 
 export default function RoleSelect() {
@@ -47,6 +48,8 @@ export default function RoleSelect() {
           <h2 className="text-lg font-bold text-ink">{t('roleContact')}</h2>
           <p className="mt-1 text-xs text-muted">{t('contactRoleDesc')}</p>
         </button>
+
+        <BackButton />
       </div>
     </div>
   );

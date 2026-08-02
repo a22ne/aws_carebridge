@@ -119,6 +119,7 @@ export const en = {
   statusContacted: 'Contacted',
   statusScheduled: 'Scheduled',
   statusResolved: 'Resolved',
+  back: 'Back',
   backHome: 'Back home',
   retry: 'Retry',
   loading: 'Loading...',

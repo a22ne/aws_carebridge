@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
+import { BackButton } from '@/components/BackButton';
 
 export default function ContactChoice() {
   const { t } = useI18n();
@@ -34,6 +35,8 @@ export default function ContactChoice() {
           <h2 className="text-lg font-bold text-ink">{t('joinExistingFamily')}</h2>
           <p className="mt-1 text-xs text-muted">{t('joinExistingFamilyDesc')}</p>
         </button>
+
+        <BackButton />
       </div>
     </div>
   );

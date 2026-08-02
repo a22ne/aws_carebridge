@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
+import { BackButton } from '@/components/BackButton';
 import * as api from '@/services/api';
 
 export default function JoinHousehold() {
@@ -87,6 +88,8 @@ export default function JoinHousehold() {
         >
           {loading ? t('loading') : t('confirm')}
         </button>
+
+        <BackButton />
       </form>
     </div>
   );
