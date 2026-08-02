@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
 import { BackButton } from '@/components/BackButton';
-import { GENDER_OPTIONS, CHRONIC_CONDITION_OPTIONS } from '@/constants/careOptions';
+import { GENDER_OPTIONS, CHRONIC_CONDITION_OPTIONS, CITY_OPTIONS } from '@/constants/careOptions';
 import * as api from '@/services/api';
 
 export default function ElderSetup() {
@@ -46,7 +46,7 @@ export default function ElderSetup() {
         displayName: name.trim(),
         age: Number(age),
         birthday: birthday || undefined,
-        city: city.trim() || undefined,
+        city: city || undefined,
         gender: gender || undefined,
         chronicConditions: [...conditionCodes, ...freeText],
         otherConditions: otherConditions.trim() || undefined,
@@ -135,16 +135,22 @@ export default function ElderSetup() {
             </label>
           </div>
 
+          {/* City — coded so the address renders in the reader's language */}
           <div className="card p-4">
             <label className="block text-sm font-bold text-ink">
               {t('city')}
-              <input
-                type="text"
+              <select
                 value={city}
                 onChange={e => setCity(e.target.value)}
-                placeholder={t('cityPlaceholder')}
-                className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
-              />
+                className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink"
+              >
+                <option value="">{t('cityPlaceholder')}</option>
+                {CITY_OPTIONS.map(opt => (
+                  <option key={opt.code} value={opt.code}>
+                    {t(opt.labelKey as any)}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
         </div>

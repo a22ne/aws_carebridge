@@ -4,6 +4,7 @@ import { useAppState } from '@/hooks/useAppState';
 import {
   GENDER_OPTIONS,
   CHRONIC_CONDITION_OPTIONS,
+  CITY_OPTIONS,
   labelForCode,
   labelsForCodes,
 } from '@/constants/careOptions';
@@ -95,6 +96,8 @@ export function ElderDetail({ open, onClose, elder, onSave }: ElderDetailProps) 
   // Display values resolve codes to the current language, falling back to raw
   // text so records created before code-ification still render.
   const genderLabel = labelForCode('gender', elder?.gender, tOptional);
+  const cityLabel = labelForCode('city', elder?.city, tOptional);
+  const cityIsKnownCode = CITY_OPTIONS.some(o => o.code === form.city);
   const conditionLabels = labelsForCodes('condition', elder?.chronicConditions, tOptional);
   const otherConditionsText =
     elder?.otherConditionTranslations?.[lang] ?? elder?.otherConditions ?? '';
@@ -156,7 +159,21 @@ export function ElderDetail({ open, onClose, elder, onSave }: ElderDetailProps) 
 
             <label className="block text-sm">
               <span className="text-xs text-muted">{t('city')}</span>
-              <input value={form.city || ''} onChange={e => updateField('city', e.target.value)} className="mt-1 w-full rounded-xl border border-line px-3 py-2 text-sm" />
+              <select
+                value={cityIsKnownCode ? form.city : ''}
+                onChange={e => updateField('city', e.target.value)}
+                className="mt-1 w-full rounded-xl border border-line px-3 py-2 text-sm"
+              >
+                {/* Legacy free-text values stay visible until the contact picks a code */}
+                <option value={cityIsKnownCode ? '' : form.city || ''}>
+                  {cityIsKnownCode ? t('cityPlaceholder') : form.city || t('cityPlaceholder')}
+                </option>
+                {CITY_OPTIONS.map(opt => (
+                  <option key={opt.code} value={opt.code}>
+                    {t(opt.labelKey as any)}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <div>
@@ -217,7 +234,7 @@ export function ElderDetail({ open, onClose, elder, onSave }: ElderDetailProps) 
               </div>
               <div className="rounded-xl bg-[#F7F8FA] p-3">
                 <span className="text-xs text-muted">{t('city')}</span>
-                <p className="mt-1 font-bold">{elder?.city || '-'}</p>
+                <p className="mt-1 font-bold">{cityLabel}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">

@@ -4,7 +4,7 @@ import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
 import { ElderDetail } from '@/components/ElderDetail';
 import { UserProfileCard } from '@/components/UserProfileCard';
-import { labelsForCodes } from '@/constants/careOptions';
+import { labelForCode, labelsForCodes } from '@/constants/careOptions';
 import * as api from '@/services/api';
 import type { Incident, ElderProfile, UserProfile } from '@carebridge/shared-types';
 
@@ -129,6 +129,7 @@ export default function ContactHome() {
 
   const displaySaveError = saveErrorKey ? t(saveErrorKey as any) : saveErrorText;
   const conditionLabels = labelsForCodes('condition', elderProfile?.chronicConditions, tOptional);
+  const cityLabel = elderProfile?.city ? labelForCode('city', elderProfile.city, tOptional) : '';
 
   return (
     <div className="space-y-4">
@@ -146,7 +147,7 @@ export default function ContactHome() {
             {elderProfile?.age ? `, ${elderProfile.age}` : ''}
           </h2>
           <p className="text-xs text-muted">
-            {elderProfile?.city ? `${elderProfile.city} · ` : ''}
+            {cityLabel ? `${cityLabel} · ` : ''}
             {conditionLabels.length ? conditionLabels.join('、') : t('tapForDetail')}
           </p>
         </div>

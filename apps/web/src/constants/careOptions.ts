@@ -35,6 +35,18 @@ export const MOBILITY_OPTIONS = build('mobility', [
 
 export const BREATHING_OPTIONS = build('breathing', ['normal', 'rapid', 'difficult']);
 
+/**
+ * Taiwan's 22 administrative divisions, plus `other` for anywhere else.
+ * Stored as codes so the address renders in the reader's language.
+ */
+export const CITY_OPTIONS = build('city', [
+  'taipei', 'new_taipei', 'taoyuan', 'taichung', 'tainan', 'kaohsiung',
+  'keelung', 'hsinchu_city', 'chiayi_city',
+  'hsinchu_county', 'miaoli', 'changhua', 'nantou', 'yunlin', 'chiayi_county',
+  'pingtung', 'yilan', 'hualien', 'taitung', 'penghu', 'kinmen', 'lienchiang',
+  'other',
+]);
+
 /** Common chronic conditions offered as chips; free text stays available */
 export const CHRONIC_CONDITION_OPTIONS = build('condition', [
   'hypertension', 'diabetes', 'heart_disease', 'copd', 'stroke_history',

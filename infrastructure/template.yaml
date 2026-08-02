@@ -87,9 +87,16 @@ Resources:
     Properties:
       Handler: handlers/household.create
       CodeUri: ../services/api/dist/
+      # Free-text fields (otherConditions) are translated on write
+      Timeout: 60
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref HouseholdsTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
       Events:
         Api:
           Type: HttpApi
@@ -135,9 +142,16 @@ Resources:
     Properties:
       Handler: handlers/household.update
       CodeUri: ../services/api/dist/
+      # careGuidelines / otherConditions are translated to all languages on write
+      Timeout: 60
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref HouseholdsTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
       Events:
         Api:
           Type: HttpApi

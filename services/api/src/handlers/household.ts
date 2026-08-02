@@ -164,10 +164,19 @@ export const update = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
     if (elderProfile !== undefined) {
       const current = existing.Item.elderProfile || {};
 
-      // Only re-translate when the free-text description actually changed
+      // Re-translate when the text changed, or when an earlier attempt left no
+      // translations behind (records created before this field existed, or a
+      // save that happened while Bedrock was unreachable).
       let otherConditionTranslations: Record<string, string> | undefined;
-      const incomingOther = elderProfile.otherConditions;
-      if (incomingOther !== undefined && incomingOther !== current.otherConditions) {
+      const incomingOther = elderProfile.otherConditions ?? current.otherConditions;
+      const textChanged =
+        elderProfile.otherConditions !== undefined &&
+        elderProfile.otherConditions !== current.otherConditions;
+      const translationsMissing =
+        !current.otherConditionTranslations ||
+        Object.keys(current.otherConditionTranslations).length === 0;
+
+      if (incomingOther && (textChanged || translationsMissing)) {
         const sourceLang = isSupportedLanguage(body.language) ? body.language : 'zh-TW';
         otherConditionTranslations =
           (await translateToAllLanguages(String(incomingOther), sourceLang)) ?? {};
