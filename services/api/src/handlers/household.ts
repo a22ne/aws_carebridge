@@ -3,6 +3,7 @@ import { config } from '../utils/config.js';
 import { db, PutCommand, GetCommand, QueryCommand, UpdateCommand } from '../utils/db.js';
 import { success, error, serverError } from '../utils/response.js';
 import { generateId, generateJoinCode } from '../utils/id.js';
+import { translateToAllLanguages, isSupportedLanguage } from '../utils/translate.js';
 
 // POST /households
 export const create = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
@@ -19,6 +20,11 @@ export const create = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
     const joinCode = generateJoinCode();
     const now = new Date().toISOString();
 
+    const sourceLang = isSupportedLanguage(body.language) ? body.language : 'zh-TW';
+    const otherConditionTranslations = elderProfile.otherConditions
+      ? (await translateToAllLanguages(String(elderProfile.otherConditions), sourceLang)) ?? {}
+      : {};
+
     const item = {
       householdId,
       joinCode,
@@ -31,6 +37,7 @@ export const create = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
         gender: elderProfile.gender || '',
         chronicConditions: elderProfile.chronicConditions || [],
         otherConditions: elderProfile.otherConditions || '',
+        otherConditionTranslations,
         medications: elderProfile.medications || [],
         allergies: elderProfile.allergies || [],
         baselineMobility: elderProfile.baselineMobility || 'unknown',
@@ -156,6 +163,16 @@ export const update = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
 
     if (elderProfile !== undefined) {
       const current = existing.Item.elderProfile || {};
+
+      // Only re-translate when the free-text description actually changed
+      let otherConditionTranslations: Record<string, string> | undefined;
+      const incomingOther = elderProfile.otherConditions;
+      if (incomingOther !== undefined && incomingOther !== current.otherConditions) {
+        const sourceLang = isSupportedLanguage(body.language) ? body.language : 'zh-TW';
+        otherConditionTranslations =
+          (await translateToAllLanguages(String(incomingOther), sourceLang)) ?? {};
+      }
+
       values[':elderProfile'] = {
         elderId: current.elderId || generateId(),
         displayName: elderProfile.displayName ?? current.displayName ?? '',
@@ -165,6 +182,7 @@ export const update = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
         gender: elderProfile.gender ?? current.gender ?? '',
         chronicConditions: elderProfile.chronicConditions ?? current.chronicConditions ?? [],
         otherConditions: elderProfile.otherConditions ?? current.otherConditions ?? '',
+        otherConditionTranslations: otherConditionTranslations ?? current.otherConditionTranslations ?? {},
         medications: elderProfile.medications ?? current.medications ?? [],
         allergies: elderProfile.allergies ?? current.allergies ?? [],
         baselineMobility: elderProfile.baselineMobility ?? current.baselineMobility ?? 'unknown',
@@ -184,10 +202,18 @@ export const update = async (event: APIGatewayProxyEventV2): Promise<APIGatewayP
     }
 
     if (careGuidelines !== undefined) {
-      values[':careGuidelines'] = String(careGuidelines);
+      const text = String(careGuidelines);
+      values[':careGuidelines'] = text;
       values[':guidelinesUpdatedAt'] = now;
       setClauses.push('careGuidelines = :careGuidelines');
       setClauses.push('careGuidelinesUpdatedAt = :guidelinesUpdatedAt');
+
+      // The caregiver may not read the contact's language, so store every
+      // translation up front and let the UI pick the right one.
+      const sourceLang = isSupportedLanguage(body.language) ? body.language : 'zh-TW';
+      const translations = await translateToAllLanguages(text, sourceLang);
+      values[':guidelineTranslations'] = translations ?? {};
+      setClauses.push('careGuidelineTranslations = :guidelineTranslations');
     }
 
     const result = await db.send(new UpdateCommand({

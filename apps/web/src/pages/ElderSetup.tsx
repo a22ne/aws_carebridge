@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
 import { BackButton } from '@/components/BackButton';
+import { GENDER_OPTIONS, CHRONIC_CONDITION_OPTIONS } from '@/constants/careOptions';
 import * as api from '@/services/api';
 
 export default function ElderSetup() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { setHousehold, setElder } = useAppState();
   const navigate = useNavigate();
 
@@ -15,10 +16,17 @@ export default function ElderSetup() {
   const [birthday, setBirthday] = useState('');
   const [city, setCity] = useState('');
   const [gender, setGender] = useState('');
-  const [conditions, setConditions] = useState('');
+  const [conditionCodes, setConditionCodes] = useState<string[]>([]);
+  const [extraConditions, setExtraConditions] = useState('');
   const [otherConditions, setOtherConditions] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const toggleCondition = (code: string) => {
+    setConditionCodes(prev =>
+      prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,15 +35,24 @@ export default function ElderSetup() {
     setLoading(true);
     setErrorMsg('');
 
-    const res = await api.createHousehold({
-      displayName: name.trim(),
-      age: Number(age),
-      birthday: birthday || undefined,
-      city: city.trim() || undefined,
-      gender: gender.trim() || undefined,
-      chronicConditions: conditions.split(',').map(s => s.trim()).filter(Boolean),
-      otherConditions: otherConditions.trim() || undefined,
-    });
+    // Coded conditions first, then any free-text additions the caregiver typed
+    const freeText = extraConditions
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    const res = await api.createHousehold(
+      {
+        displayName: name.trim(),
+        age: Number(age),
+        birthday: birthday || undefined,
+        city: city.trim() || undefined,
+        gender: gender || undefined,
+        chronicConditions: [...conditionCodes, ...freeText],
+        otherConditions: otherConditions.trim() || undefined,
+      },
+      lang
+    );
 
     if (res.success && res.data) {
       setHousehold(res.data.householdId, res.data.joinCode);
@@ -70,34 +87,38 @@ export default function ElderSetup() {
           </label>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="card p-4">
-            <label className="block text-sm font-bold text-ink">
-              {t('age')}
-              <input
-                type="number"
-                value={age}
-                onChange={e => setAge(e.target.value)}
-                placeholder="83"
-                min="0"
-                max="120"
-                className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
-                required
-              />
-            </label>
-          </div>
+        <div className="card p-4">
+          <label className="block text-sm font-bold text-ink">
+            {t('age')}
+            <input
+              type="number"
+              value={age}
+              onChange={e => setAge(e.target.value)}
+              placeholder="83"
+              min="0"
+              max="120"
+              className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
+              required
+            />
+          </label>
+        </div>
 
-          <div className="card p-4">
-            <label className="block text-sm font-bold text-ink">
-              {t('gender')}
-              <input
-                type="text"
-                value={gender}
-                onChange={e => setGender(e.target.value)}
-                placeholder={t('genderPlaceholder')}
-                className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
-              />
-            </label>
+        {/* Gender — coded so it renders in every language */}
+        <div className="card p-4">
+          <span className="block text-sm font-bold text-ink">{t('gender')}</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {GENDER_OPTIONS.map(opt => (
+              <button
+                key={opt.code}
+                type="button"
+                onClick={() => setGender(gender === opt.code ? '' : opt.code)}
+                className={`rounded-full border px-4 py-1.5 text-xs font-bold ${
+                  gender === opt.code ? 'border-primary bg-primary text-white' : 'border-line bg-white text-ink'
+                }`}
+              >
+                {t(opt.labelKey as any)}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -128,17 +149,32 @@ export default function ElderSetup() {
           </div>
         </div>
 
+        {/* Chronic conditions — common ones coded, free text for the rest */}
         <div className="card p-4">
-          <label className="block text-sm font-bold text-ink">
-            {t('chronicConditionsLabel')}
-            <input
-              type="text"
-              value={conditions}
-              onChange={e => setConditions(e.target.value)}
-              placeholder={t('chronicConditionsPlaceholder')}
-              className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
-            />
-          </label>
+          <span className="block text-sm font-bold text-ink">{t('chronicConditionsLabel')}</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {CHRONIC_CONDITION_OPTIONS.map(opt => (
+              <button
+                key={opt.code}
+                type="button"
+                onClick={() => toggleCondition(opt.code)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-bold ${
+                  conditionCodes.includes(opt.code)
+                    ? 'border-primary bg-primary text-white'
+                    : 'border-line bg-white text-ink'
+                }`}
+              >
+                {t(opt.labelKey as any)}
+              </button>
+            ))}
+          </div>
+          <input
+            type="text"
+            value={extraConditions}
+            onChange={e => setExtraConditions(e.target.value)}
+            placeholder={t('chronicConditionsExtraPlaceholder')}
+            className="mt-3 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-sm text-ink placeholder:text-muted/50"
+          />
         </div>
 
         <div className="card p-4">

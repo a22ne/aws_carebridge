@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
 import { BackButton } from '@/components/BackButton';
+import { RELATIONSHIP_OPTIONS } from '@/constants/careOptions';
 
 export default function ContactProfile() {
   const { t } = useI18n();
@@ -57,17 +58,25 @@ export default function ContactProfile() {
           </label>
         </div>
 
+        {/* Relationship — coded so the caregiver sees it in their own language */}
         <div className="card p-4">
-          <label className="block text-sm font-bold text-ink">
-            {t('relationship')}
-            <input
-              type="text"
-              value={relationship}
-              onChange={e => setRelationship(e.target.value)}
-              placeholder={t('relationshipPlaceholder')}
-              className="mt-1.5 w-full rounded-2xl border border-line bg-[#FBFCFD] px-4 py-3 text-ink placeholder:text-muted/50"
-            />
-          </label>
+          <span className="block text-sm font-bold text-ink">{t('relationship')}</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {RELATIONSHIP_OPTIONS.map(opt => (
+              <button
+                key={opt.code}
+                type="button"
+                onClick={() => setRelationship(relationship === opt.code ? '' : opt.code)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-bold ${
+                  relationship === opt.code
+                    ? 'border-primary bg-primary text-white'
+                    : 'border-line bg-white text-ink'
+                }`}
+              >
+                {t(opt.labelKey as any)}
+              </button>
+            ))}
+          </div>
         </div>
 
         <button

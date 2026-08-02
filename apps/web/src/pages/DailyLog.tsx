@@ -2,24 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
+import {
+  MOBILITY_OPTIONS,
+  BREATHING_OPTIONS,
+  MOOD_OPTIONS,
+  EXCRETION_OPTIONS,
+} from '@/constants/careOptions';
 import * as api from '@/services/api';
-
-/**
- * Stable codes stored in DynamoDB. Display labels come from i18n so the
- * backend monitoring rules stay language-independent.
- */
-const MOBILITY_OPTIONS = [
-  { code: 'normal', labelKey: 'mobility_normal' },
-  { code: 'slightly_unstable', labelKey: 'mobility_slightly_unstable' },
-  { code: 'needs_support', labelKey: 'mobility_needs_support' },
-  { code: 'unable_to_walk', labelKey: 'mobility_unable_to_walk' },
-] as const;
-
-const BREATHING_OPTIONS = [
-  { code: 'normal', labelKey: 'breathing_normal' },
-  { code: 'rapid', labelKey: 'breathing_rapid' },
-  { code: 'difficult', labelKey: 'breathing_difficult' },
-] as const;
 
 /**
  * Local calendar date (YYYY-MM-DD). Must match the Timeline date filter,
@@ -230,26 +219,41 @@ export default function DailyLog() {
                 className="mt-1 w-full rounded-xl border border-line bg-[#FBFCFD] px-3 py-2 text-sm"
               />
             </label>
-            <label className="block text-sm text-ink">
-              {t('mood')}
-              <input
-                type="text"
-                value={mood}
-                onChange={e => setMood(e.target.value)}
-                placeholder={t('moodPlaceholder')}
-                className="mt-1 w-full rounded-xl border border-line bg-[#FBFCFD] px-3 py-2 text-sm"
-              />
-            </label>
-            <label className="block text-sm text-ink">
-              {t('excretion')}
-              <input
-                type="text"
-                value={excretion}
-                onChange={e => setExcretion(e.target.value)}
-                placeholder={t('excretionPlaceholder')}
-                className="mt-1 w-full rounded-xl border border-line bg-[#FBFCFD] px-3 py-2 text-sm"
-              />
-            </label>
+            <div>
+              <span className="block text-sm text-ink">{t('mood')}</span>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                {MOOD_OPTIONS.map(opt => (
+                  <button
+                    key={opt.code}
+                    type="button"
+                    onClick={() => setMood(mood === opt.code ? '' : opt.code)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-bold ${
+                      mood === opt.code ? 'border-primary bg-primary text-white' : 'border-line bg-white text-ink'
+                    }`}
+                  >
+                    {t(opt.labelKey as any)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <span className="block text-sm text-ink">{t('excretion')}</span>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                {EXCRETION_OPTIONS.map(opt => (
+                  <button
+                    key={opt.code}
+                    type="button"
+                    onClick={() => setExcretion(excretion === opt.code ? '' : opt.code)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-bold ${
+                      excretion === opt.code ? 'border-primary bg-primary text-white' : 'border-line bg-white text-ink'
+                    }`}
+                  >
+                    {t(opt.labelKey as any)}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </details>
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useI18n } from '@/hooks/useI18n';
+import { RELATIONSHIP_OPTIONS, labelForCode } from '@/constants/careOptions';
 import type { Role, UserProfile } from '@carebridge/shared-types';
 
 interface UserProfileCardProps {
@@ -12,7 +13,7 @@ interface UserProfileCardProps {
 }
 
 export function UserProfileCard({ profileRole, profile, editable, onSave }: UserProfileCardProps) {
-  const { t } = useI18n();
+  const { t, tOptional } = useI18n();
 
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -92,15 +93,25 @@ export function UserProfileCard({ profileRole, profile, editable, onSave }: User
                 />
               </label>
               {profileRole === 'contact' && (
-                <label className="block text-xs text-muted">
-                  {t('relationship')}
-                  <input
-                    value={relationship}
-                    onChange={e => setRelationship(e.target.value)}
-                    placeholder={t('relationshipPlaceholder')}
-                    className="mt-1 w-full rounded-xl border border-line bg-[#FBFCFD] px-3 py-2 text-sm text-ink"
-                  />
-                </label>
+                <div>
+                  <span className="text-xs text-muted">{t('relationship')}</span>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {RELATIONSHIP_OPTIONS.map(opt => (
+                      <button
+                        key={opt.code}
+                        type="button"
+                        onClick={() => setRelationship(relationship === opt.code ? '' : opt.code)}
+                        className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${
+                          relationship === opt.code
+                            ? 'border-primary bg-primary text-white'
+                            : 'border-line bg-white text-ink'
+                        }`}
+                      >
+                        {t(opt.labelKey as any)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
               <div className="flex gap-2 pt-1">
                 <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 text-xs disabled:opacity-50">
@@ -126,7 +137,9 @@ export function UserProfileCard({ profileRole, profile, editable, onSave }: User
               {profileRole === 'contact' && (
                 <div className="rounded-xl bg-[#F7F8FA] p-2.5">
                   <span className="text-[10px] text-muted">{t('relationship')}</span>
-                  <p className="mt-0.5 text-sm font-bold">{profile?.relationship || '-'}</p>
+                  <p className="mt-0.5 text-sm font-bold">
+                    {labelForCode('relationship', profile?.relationship, tOptional)}
+                  </p>
                 </div>
               )}
 

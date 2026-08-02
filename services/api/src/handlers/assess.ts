@@ -84,14 +84,28 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     // Run deterministic rule engine (Layer 1 — cannot be overridden by AI)
     const { riskLevel, triggered } = evaluateRules(symptoms, answers);
 
-    // Build result
-    const confirmedFacts = symptoms
-      .filter((s: any) => s.status === 'present')
-      .map((s: any) => s.label);
+    // Symptom names come from Bedrock in all four languages. Emit per-language
+    // maps so the UI can render in the reader's language, and keep the flat
+    // arrays for backward compatibility with existing clients/records.
+    const LANGS = ['zh-TW', 'en', 'id', 'vi'] as const;
 
-    const missingInformation = symptoms
-      .filter((s: any) => s.status === 'unknown')
-      .map((s: any) => s.label);
+    const labelIn = (s: any, lang: string): string =>
+      s.labels?.[lang] ?? s.labels?.['zh-TW'] ?? s.label ?? s.code;
+
+    const present = symptoms.filter((s: any) => s.status === 'present');
+    const unknownSymptoms = symptoms.filter((s: any) => s.status === 'unknown');
+
+    const buildMap = (list: any[]) =>
+      LANGS.reduce<Record<string, string[]>>((acc, lang) => {
+        acc[lang] = list.map(s => labelIn(s, lang));
+        return acc;
+      }, {});
+
+    const confirmedFactsByLanguage = buildMap(present);
+    const missingInformationByLanguage = buildMap(unknownSymptoms);
+
+    const confirmedFacts = confirmedFactsByLanguage['zh-TW'];
+    const missingInformation = missingInformationByLanguage['zh-TW'];
 
     const recommendedActions = triggered.map(r => r.actionCode);
     const sourceIds = triggered.map(r => r.ruleId);
@@ -99,14 +113,23 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
       .filter(r => r.riskLevel === 'emergency')
       .map(r => r.title);
 
-    const result: AssessmentResult = {
+    const result: AssessmentResult & {
+      confirmedFactsByLanguage: Record<string, string[]>;
+      missingInformationByLanguage: Record<string, string[]>;
+    } = {
       riskLevel,
       triggeredRules: triggered.map(r => r.ruleId),
       confirmedFacts,
       missingInformation,
+      confirmedFactsByLanguage,
+      missingInformationByLanguage,
       recommendedActions: [...new Set(recommendedActions)],
+      // Chinese titles from the rule file. The UI prefers translating from
+      // sourceIds and only falls back to these.
       escalationWarnings,
       sourceIds,
+      // Localised in the UI via the `disclaimer` i18n key; kept here so API
+      // consumers always receive the required non-diagnosis statement.
       disclaimer: 'CareBridge AI 不是醫療診斷工具。如出現急性惡化或生命危險，請立即聯絡當地緊急服務或醫療專業人員。',
     };
 
@@ -114,11 +137,13 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
     await db.send(new UpdateCommand({
       TableName: config.incidentsTable,
       Key: { householdId, incidentId },
-      UpdateExpression: 'SET riskLevel = :risk, triggeredRules = :rules, missingInformation = :missing, recommendedActions = :actions, sourceIds = :sources, updatedAt = :now',
+      UpdateExpression: 'SET riskLevel = :risk, triggeredRules = :rules, missingInformation = :missing, missingInformationByLanguage = :missingByLang, confirmedFactsByLanguage = :confirmedByLang, recommendedActions = :actions, sourceIds = :sources, updatedAt = :now',
       ExpressionAttributeValues: {
         ':risk': riskLevel,
         ':rules': sourceIds,
         ':missing': missingInformation,
+        ':missingByLang': missingInformationByLanguage,
+        ':confirmedByLang': confirmedFactsByLanguage,
         ':actions': result.recommendedActions,
         ':sources': sourceIds,
         ':now': new Date().toISOString(),

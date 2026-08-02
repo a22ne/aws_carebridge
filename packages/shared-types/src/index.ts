@@ -23,8 +23,11 @@ export interface ElderProfile {
   birthday?: string;
   city?: string;
   gender?: string;
+  /** Stable condition codes, plus any free-text entries the user added */
   chronicConditions: string[];
   otherConditions?: string;
+  /** Bedrock translations of `otherConditions` */
+  otherConditionTranslations?: Partial<Record<Language, string>>;
   medications: string[];
   allergies: string[];
   baselineMobility: string;
@@ -49,6 +52,8 @@ export interface Household {
   contactProfile?: UserProfile;
   /** Care guidelines authored by the contact, read-only for the caregiver */
   careGuidelines?: string;
+  /** Bedrock translations so the caregiver can read them in their language */
+  careGuidelineTranslations?: Partial<Record<Language, string>>;
   careGuidelinesUpdatedAt?: string;
   createdAt: string;
   updatedAt?: string;
@@ -57,7 +62,11 @@ export interface Household {
 // === Incident ===
 
 export interface ExtractedSymptom {
+  /** Stable snake_case identifier, never translated */
   code: string;
+  /** Symptom name per language; preferred over `label` */
+  labels?: Partial<Record<Language, string>>;
+  /** zh-TW name. Retained for records created before `labels` existed. */
   label: string;
   status: SymptomStatus;
   evidence: string;
@@ -197,9 +206,14 @@ export interface AssessmentQuestion {
 export interface AssessmentResult {
   riskLevel: RiskLevel;
   triggeredRules: string[];
+  /** zh-TW facts, kept for backward compatibility */
   confirmedFacts: string[];
   missingInformation: string[];
+  /** Per-language facts; preferred when present */
+  confirmedFactsByLanguage?: Partial<Record<Language, string[]>>;
+  missingInformationByLanguage?: Partial<Record<Language, string[]>>;
   recommendedActions: string[];
+  /** Rule titles in zh-TW; translate from `sourceIds` when possible */
   escalationWarnings: string[];
   sourceIds: string[];
   disclaimer: string;

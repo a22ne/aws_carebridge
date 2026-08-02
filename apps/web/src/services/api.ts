@@ -38,33 +38,40 @@ async function request<T>(path: string, options?: RequestInit): Promise<ApiRespo
 
 // === Households ===
 
-export async function createHousehold(elderProfile: {
-  displayName: string;
-  age: number;
-  birthday?: string;
-  city?: string;
-  gender?: string;
-  chronicConditions: string[];
-  otherConditions?: string;
-}) {
+export async function createHousehold(
+  elderProfile: {
+    displayName: string;
+    age: number;
+    birthday?: string;
+    city?: string;
+    gender?: string;
+    chronicConditions: string[];
+    otherConditions?: string;
+  },
+  language?: string
+) {
   return request<Household>('/households', {
     method: 'POST',
-    body: JSON.stringify({ elderProfile }),
+    body: JSON.stringify({ elderProfile, language }),
   });
 }
 
-export async function updateHousehold(householdId: string, elderProfile: {
-  displayName?: string;
-  age?: number;
-  birthday?: string;
-  city?: string;
-  gender?: string;
-  chronicConditions?: string[];
-  otherConditions?: string;
-}) {
+export async function updateHousehold(
+  householdId: string,
+  elderProfile: {
+    displayName?: string;
+    age?: number;
+    birthday?: string;
+    city?: string;
+    gender?: string;
+    chronicConditions?: string[];
+    otherConditions?: string;
+  },
+  language?: string
+) {
   return request<Household>(`/households/${householdId}`, {
     method: 'PATCH',
-    body: JSON.stringify({ elderProfile }),
+    body: JSON.stringify({ elderProfile, language }),
   });
 }
 
@@ -80,10 +87,14 @@ export async function updateUserProfile(
   });
 }
 
-export async function updateCareGuidelines(householdId: string, careGuidelines: string) {
+export async function updateCareGuidelines(
+  householdId: string,
+  careGuidelines: string,
+  language?: string
+) {
   return request<Household>(`/households/${householdId}`, {
     method: 'PATCH',
-    body: JSON.stringify({ careGuidelines }),
+    body: JSON.stringify({ careGuidelines, language }),
   });
 }
 

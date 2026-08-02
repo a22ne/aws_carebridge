@@ -5,23 +5,28 @@ import { converseJson } from '../utils/bedrock.js';
 import { success, error, serverError } from '../utils/response.js';
 import { generateId } from '../utils/id.js';
 
-const NOTIFY_SYSTEM_PROMPT = `You are a notification writer for CareBridge AI. Generate a concise notification summary in Traditional Chinese (zh-TW) for family members and care contacts.
+const NOTIFY_SYSTEM_PROMPT = `You are a notification writer for CareBridge AI, used by families and foreign caregivers.
 
 Rules:
 - Base the summary ONLY on confirmed facts.
 - Clearly mark unconfirmed information.
 - Do NOT use diagnostic language.
 - Do NOT exaggerate or downplay risk.
+- Do NOT use markdown formatting.
 - Keep it short and suitable for mobile reading.
 - Include: symptoms observed, risk level, recommended next steps.
 - Be consistent with the rule engine assessment result.
+- Produce the summary in EVERY requested language. Preserve identical meaning
+  across languages; do not add or omit information in any version.
 
-Output JSON schema:
+Output JSON schema (one entry per requested language code):
 {
-  "title": "string (short title for notification)",
-  "originalSummary": "string (summary in caregiver's language)",
-  "translatedSummary": "string (summary in zh-TW)"
+  "title": {"zh-TW": "string", "en": "string", "id": "string", "vi": "string"},
+  "summary": {"zh-TW": "string", "en": "string", "id": "string", "vi": "string"}
 }`;
+
+const SUPPORTED_LANGUAGES = ['zh-TW', 'en', 'id', 'vi'] as const;
+type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 // POST /incidents/{incidentId}/notify
 export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> => {
@@ -50,6 +55,11 @@ export const handler = async (event: APIGatewayProxyEventV2): Promise<APIGateway
       return error({ code: 'INVALID_STATE', message: 'Assessment must be completed before notification', requestId });
     }
 
+    const sourceLanguage: SupportedLanguage =
+      SUPPORTED_LANGUAGES.includes(item.originalLanguage)
+        ? item.originalLanguage
+        : 'zh-TW';
+
     // Generate notification text via Bedrock
     const context = `
 Incident details:
@@ -63,14 +73,16 @@ Incident details:
 `;
 
     const notifyContent = await converseJson<{
-      title: string;
-      originalSummary: string;
-      translatedSummary: string;
+      title: Partial<Record<SupportedLanguage, string>>;
+      summary: Partial<Record<SupportedLanguage, string>>;
     }>({
       systemPrompt: NOTIFY_SYSTEM_PROMPT,
-      userMessage: context,
-      maxTokens: 800,
+      userMessage: `Requested languages: ${SUPPORTED_LANGUAGES.join(', ')}\nCaregiver's language: ${sourceLanguage}\n${context}`,
+      maxTokens: 1500,
     });
+
+    const titles = notifyContent.title || {};
+    const summaries = notifyContent.summary || {};
 
     // Save notification
     const notificationId = generateId();
@@ -81,9 +93,13 @@ Incident details:
       notificationId,
       incidentId,
       recipientRole: 'contact',
-      title: notifyContent.title,
-      originalSummary: notifyContent.originalSummary,
-      translatedSummary: notifyContent.translatedSummary,
+      // Per-language maps drive the UI; the flat fields below stay for
+      // backward compatibility with notifications created before this change.
+      titles,
+      summaries,
+      title: titles['zh-TW'] || titles[sourceLanguage] || '',
+      originalSummary: summaries[sourceLanguage] || summaries['zh-TW'] || '',
+      translatedSummary: summaries['zh-TW'] || '',
       readAt: null,
       responseStatus: 'pending',
       createdAt: now,

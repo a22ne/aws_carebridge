@@ -1,4 +1,5 @@
 import { useI18n } from '@/hooks/useI18n';
+import { labelForCode } from '@/constants/careOptions';
 import type { Incident, DailyLog, ExtractedSymptom } from '@carebridge/shared-types';
 
 export type TimelineDetailTarget =
@@ -70,8 +71,20 @@ function IncidentBody({
   incident: Incident;
   symptomStatusLabel: (s: ExtractedSymptom['status']) => string;
 }) {
-  const { t } = useI18n();
+  const { t, tOptional, lang, formatDateTime } = useI18n();
   const symptoms = incident.extractedSymptoms || [];
+
+  const statusLabel =
+    tOptional(`status${incident.status.charAt(0).toUpperCase()}${incident.status.slice(1)}`)
+    ?? incident.status;
+
+  // Rule IDs resolve to translated titles; unknown IDs show the raw ID
+  const ruleTitles = (incident.triggeredRules || []).map(
+    id => tOptional(`rule_${id}`) ?? id
+  );
+
+  const missingInfo =
+    (incident as any).missingInformationByLanguage?.[lang] ?? incident.missingInformation ?? [];
 
   return (
     <div className="space-y-2.5">
@@ -89,8 +102,8 @@ function IncidentBody({
         </div>
       )}
 
-      <Row label={t('recordedAt')} value={new Date(incident.createdAt).toLocaleString()} />
-      <Row label={t('status')} value={t(`status${incident.status.charAt(0).toUpperCase()}${incident.status.slice(1)}` as any) || incident.status} />
+      <Row label={t('recordedAt')} value={formatDateTime(incident.createdAt)} />
+      <Row label={t('status')} value={statusLabel} />
 
       {incident.originalText && (
         <Row label={t('originalText')} value={incident.originalText} />
@@ -106,7 +119,7 @@ function IncidentBody({
           <ul className="mt-1 space-y-1">
             {symptoms.map((s, i) => (
               <li key={`${s.code}-${i}`} className="flex items-center justify-between text-sm">
-                <span>{s.label}</span>
+                <span>{s.labels?.[lang] ?? s.label ?? s.code}</span>
                 <span
                   className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                     s.status === 'present' ? 'bg-orange-100 text-orange-700'
@@ -133,12 +146,12 @@ function IncidentBody({
         </div>
       )}
 
-      {incident.missingInformation?.length > 0 && (
-        <Row label={t('unconfirmedInfo')} value={incident.missingInformation.join('、')} />
+      {missingInfo.length > 0 && (
+        <Row label={t('unconfirmedInfo')} value={missingInfo.join('、')} />
       )}
 
-      {incident.triggeredRules?.length > 0 && (
-        <Row label={t('triggeredRules')} value={incident.triggeredRules.join(', ')} />
+      {ruleTitles.length > 0 && (
+        <Row label={t('triggeredRules')} value={ruleTitles.join('、')} />
       )}
 
       <p className="pt-1 text-[11px] leading-relaxed text-muted">{t('disclaimer')}</p>
@@ -147,14 +160,13 @@ function IncidentBody({
 }
 
 function DailyLogBody({ log }: { log: DailyLog }) {
-  const { t } = useI18n();
+  const { t, tOptional, formatDate, formatDateTime } = useI18n();
 
-  const mobilityLabel = log.mobility
-    ? t(`mobility_${log.mobility}` as any) || log.mobility
-    : '-';
-  const breathingLabel = log.breathing
-    ? t(`breathing_${log.breathing}` as any) || log.breathing
-    : '-';
+  // Codes resolve to the current language; legacy free text falls through
+  const mobilityLabel = labelForCode('mobility', log.mobility, tOptional);
+  const breathingLabel = labelForCode('breathing', log.breathing, tOptional);
+  const moodLabel = labelForCode('mood', log.mood, tOptional);
+  const excretionLabel = labelForCode('excretion', log.excretion, tOptional);
 
   return (
     <div className="space-y-2.5">
@@ -165,7 +177,7 @@ function DailyLogBody({ log }: { log: DailyLog }) {
       )}
 
       <div className="grid grid-cols-2 gap-2.5">
-        <Row label={t('recordedAt')} value={log.date || new Date(log.createdAt).toLocaleDateString()} />
+        <Row label={t('recordedAt')} value={formatDate(log.date || log.createdAt)} />
         <Row label={t('mealPercentage')} value={`${log.meals?.percentage ?? 0}%`} />
       </div>
 
@@ -186,12 +198,12 @@ function DailyLogBody({ log }: { log: DailyLog }) {
         </div>
       )}
 
-      {log.mood && <Row label={t('mood')} value={log.mood} />}
-      {log.excretion && <Row label={t('excretion')} value={log.excretion} />}
+      {log.mood && <Row label={t('mood')} value={moodLabel} />}
+      {log.excretion && <Row label={t('excretion')} value={excretionLabel} />}
       {log.notes && <Row label={t('notes')} value={log.notes} />}
 
       <p className="pt-1 text-[11px] text-muted">
-        {new Date(log.createdAt).toLocaleString()}
+        {formatDateTime(log.createdAt)}
       </p>
     </div>
   );

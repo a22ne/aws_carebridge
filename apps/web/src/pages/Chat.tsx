@@ -7,7 +7,7 @@ import type { ChatMessage, Language } from '@carebridge/shared-types';
 const POLL_INTERVAL_MS = 5000;
 
 export default function Chat() {
-  const { t, lang } = useI18n();
+  const { t, lang, formatTime } = useI18n();
   const { role, householdId } = useAppState();
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -22,6 +22,8 @@ export default function Chat() {
 
   // Guidelines state
   const [guidelines, setGuidelines] = useState('');
+  /** Untranslated text — the contact edits this, not the translation */
+  const [guidelinesOriginal, setGuidelinesOriginal] = useState('');
   const [editingGuidelines, setEditingGuidelines] = useState(false);
   const [guidelinesInput, setGuidelinesInput] = useState('');
   const [savingGuidelines, setSavingGuidelines] = useState(false);
@@ -59,7 +61,9 @@ export default function Chat() {
 
       if (householdRes.success && householdRes.data) {
         const hh = householdRes.data as any;
-        setGuidelines(hh.careGuidelines || '');
+        // Show guidelines in the reader's language; fall back to the original
+        setGuidelines(hh.careGuidelineTranslations?.[lang] || hh.careGuidelines || '');
+        setGuidelinesOriginal(hh.careGuidelines || '');
 
         // The other party is whoever isn't me
         const other = role === 'caregiver' ? hh.contactProfile : hh.caregiverProfile;
@@ -109,9 +113,12 @@ export default function Chat() {
   const saveGuidelines = async () => {
     if (!householdId) return;
     setSavingGuidelines(true);
-    const res = await api.updateCareGuidelines(householdId, guidelinesInput);
-    if (res.success) {
-      setGuidelines(guidelinesInput);
+    // Pass the author's language so the backend translates from the right source
+    const res = await api.updateCareGuidelines(householdId, guidelinesInput, lang);
+    if (res.success && res.data) {
+      const hh = res.data as any;
+      setGuidelinesOriginal(hh.careGuidelines || guidelinesInput);
+      setGuidelines(hh.careGuidelineTranslations?.[lang] || guidelinesInput);
       setEditingGuidelines(false);
     }
     setSavingGuidelines(false);
@@ -192,7 +199,7 @@ export default function Chat() {
                     )}
                     <span>{revealed ? msg.originalText : displayText(msg)}</span>
                     <span className={`mt-1 flex items-center gap-2 text-[10px] ${mine ? 'text-white/70' : 'text-muted'}`}>
-                      {new Date(msg.createdAt).toLocaleTimeString()}
+                      {formatTime(msg.createdAt)}
                       {translated && (
                         <button
                           onClick={() => setShowOriginal(prev => ({ ...prev, [msg.messageId]: !prev[msg.messageId] }))}
@@ -241,7 +248,7 @@ export default function Chat() {
               <h3 className="font-bold">{t('careGuidelines')}</h3>
               {role === 'contact' && !editingGuidelines && (
                 <button
-                  onClick={() => { setGuidelinesInput(guidelines); setEditingGuidelines(true); }}
+                  onClick={() => { setGuidelinesInput(guidelinesOriginal); setEditingGuidelines(true); }}
                   className="text-xs font-bold text-primary"
                 >
                   {t('edit')}

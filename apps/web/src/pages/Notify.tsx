@@ -16,7 +16,7 @@ interface Recipient {
 }
 
 export default function Notify() {
-  const { t } = useI18n();
+  const { t, tOptional, lang } = useI18n();
   const { householdId } = useAppState();
   const location = useLocation();
   const navigate = useNavigate();
@@ -61,8 +61,12 @@ export default function Notify() {
   const [newPhone, setNewPhone] = useState('');
   const [newRole, setNewRole] = useState('');
 
-  const renderRole = (r: Recipient): string =>
-    r.roleKey ? t(r.roleKey as any) : (r.role ?? '');
+  const renderRole = (r: Recipient): string => {
+    if (r.roleKey) return t(r.roleKey as any);
+    if (!r.role) return '';
+    // The stored relationship may be a code (e.g. "son") or legacy free text
+    return tOptional(`relationship_${r.role}`) ?? r.role;
+  };
 
   const addRecipient = () => {
     if (!newName.trim() || !newPhone.trim()) return;
@@ -111,6 +115,13 @@ export default function Notify() {
 
   const displayError = errorKey ? t(errorKey as any) : errorText;
 
+  // Symptom names arrive per-language; fall back to the zh-TW label for
+  // incidents extracted before multi-language labels existed.
+  const symptomText = (incidentData?.extractedSymptoms ?? [])
+    .filter((s: any) => s.status === 'present')
+    .map((s: any) => s.labels?.[lang] ?? s.label ?? s.code)
+    .join('、');
+
   if (sent) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center">
@@ -142,15 +153,15 @@ export default function Notify() {
         <div className="space-y-2 text-[13px]">
           <div className="grid grid-cols-[80px_1fr] gap-2 border-t border-line pt-2">
             <span className="font-bold text-muted">{t('symptoms')}</span>
-            <span>{incidentData?.extractedSymptoms?.filter((s: any) => s.status === 'present').map((s: any) => s.label).join('、') || t('noData')}</span>
+            <span>{symptomText || t('noData')}</span>
           </div>
           <div className="grid grid-cols-[80px_1fr] gap-2 border-t border-line pt-2">
             <span className="font-bold text-muted">{t('risk')}</span>
-            <span>{incidentData?.riskLevel ? t(`risk_${incidentData.riskLevel}` as any) || incidentData.riskLevel : t('noData')}</span>
+            <span>{incidentData?.riskLevel ? (tOptional(`risk_${incidentData.riskLevel}`) ?? incidentData.riskLevel) : t('noData')}</span>
           </div>
           <div className="grid grid-cols-[80px_1fr] gap-2 border-t border-line pt-2">
             <span className="font-bold text-muted">{t('suggest')}</span>
-            <span>{incidentData?.recommendedActions?.map((a: string) => t(`action_${a}` as any) || a).join('、') || t('noData')}</span>
+            <span>{incidentData?.recommendedActions?.map((a: string) => tOptional(`action_${a}`) ?? a).join('、') || t('noData')}</span>
           </div>
         </div>
       </div>
@@ -164,6 +175,7 @@ export default function Notify() {
               <div className="flex-1">
                 <strong className="text-sm">{r.name}</strong>
                 <span className="block text-[11px] text-muted">{renderRole(r)} · {r.phone}</span>
+
               </div>
               <div className="flex items-center gap-2">
                 <button

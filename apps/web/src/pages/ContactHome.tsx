@@ -4,11 +4,12 @@ import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
 import { ElderDetail } from '@/components/ElderDetail';
 import { UserProfileCard } from '@/components/UserProfileCard';
+import { labelsForCodes } from '@/constants/careOptions';
 import * as api from '@/services/api';
 import type { Incident, ElderProfile, UserProfile } from '@carebridge/shared-types';
 
 export default function ContactHome() {
-  const { t } = useI18n();
+  const { t, tOptional, lang, formatDateTime } = useI18n();
   const { householdId, joinCode } = useAppState();
   const navigate = useNavigate();
 
@@ -70,15 +71,19 @@ export default function ContactHome() {
     if (!householdId) return;
     setSaveErrorKey(null);
     setSaveErrorText('');
-    const res = await api.updateHousehold(householdId, {
-      displayName: data.displayName,
-      age: data.age,
-      birthday: data.birthday,
-      city: data.city,
-      gender: data.gender,
-      chronicConditions: data.chronicConditions,
-      otherConditions: data.otherConditions,
-    });
+    const res = await api.updateHousehold(
+      householdId,
+      {
+        displayName: data.displayName,
+        age: data.age,
+        birthday: data.birthday,
+        city: data.city,
+        gender: data.gender,
+        chronicConditions: data.chronicConditions,
+        otherConditions: data.otherConditions,
+      },
+      lang
+    );
 
     if (res.success && res.data) {
       setElderProfile((res.data as any).elderProfile || null);
@@ -123,6 +128,7 @@ export default function ContactHome() {
   ];
 
   const displaySaveError = saveErrorKey ? t(saveErrorKey as any) : saveErrorText;
+  const conditionLabels = labelsForCodes('condition', elderProfile?.chronicConditions, tOptional);
 
   return (
     <div className="space-y-4">
@@ -141,7 +147,7 @@ export default function ContactHome() {
           </h2>
           <p className="text-xs text-muted">
             {elderProfile?.city ? `${elderProfile.city} · ` : ''}
-            {elderProfile?.chronicConditions?.join(', ') || t('tapForDetail')}
+            {conditionLabels.length ? conditionLabels.join('、') : t('tapForDetail')}
           </p>
         </div>
       </button>
@@ -209,13 +215,13 @@ export default function ContactHome() {
                       inc.riskLevel === 'urgent' ? 'bg-orange-100 text-orange-700' :
                       'bg-[#F9E6C7] text-[#9B621D]'
                     }`}>
-                      {t(`risk_${inc.riskLevel}` as any) || inc.riskLevel}
+                      {tOptional(`risk_${inc.riskLevel}`) ?? inc.riskLevel}
                     </span>
                   )}
                 </div>
 
                 <p className="mt-1 text-xs text-muted">
-                  {new Date(inc.createdAt).toLocaleString()} · {inc.status}
+                  {formatDateTime(inc.createdAt)} · {tOptional(`status${inc.status.charAt(0).toUpperCase()}${inc.status.slice(1)}`) ?? inc.status}
                 </p>
 
                 {inc.status !== 'resolved' && (
@@ -269,6 +275,7 @@ export default function ContactHome() {
           gender: elderProfile.gender,
           chronicConditions: elderProfile.chronicConditions || [],
           otherConditions: elderProfile.otherConditions,
+          otherConditionTranslations: elderProfile.otherConditionTranslations,
         } : undefined}
         onSave={handleElderSave}
       />

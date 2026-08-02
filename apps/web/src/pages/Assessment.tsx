@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
+import { isEmergencyRule } from '@/constants/clinicalRuleMeta';
 import * as api from '@/services/api';
 import type { AssessmentResult } from '@carebridge/shared-types';
 
@@ -13,7 +14,7 @@ interface QuestionData {
 }
 
 export default function Assessment() {
-  const { t, lang } = useI18n();
+  const { t, tOptional, lang } = useI18n();
   const { householdId } = useAppState();
   const location = useLocation();
   const navigate = useNavigate();
@@ -83,6 +84,20 @@ export default function Assessment() {
 
   // Result view
   if (result) {
+    // The backend returns rule titles in Chinese only, so translate from the
+    // rule IDs instead. Falls back to the backend text if no key exists yet.
+    const emergencyIds = (result.sourceIds || []).filter(isEmergencyRule);
+    const translated = emergencyIds
+      .map(id => tOptional(`rule_${id}`))
+      .filter((v): v is string => v !== null);
+    const escalationLabels = translated.length > 0
+      ? translated
+      : (result.escalationWarnings || []);
+
+    // Prefer per-language facts; older assessments only have the zh-TW arrays
+    const confirmedFacts = result.confirmedFactsByLanguage?.[lang] ?? result.confirmedFacts ?? [];
+    const missingInfo = result.missingInformationByLanguage?.[lang] ?? result.missingInformation ?? [];
+
     const riskColors: Record<string, string> = {
       emergency: 'border-red-300 bg-gradient-to-br from-red-50 to-white',
       urgent: 'border-orange-300 bg-gradient-to-br from-orange-50 to-white',
@@ -99,24 +114,24 @@ export default function Assessment() {
 
         {/* Risk Card */}
         <div className={`card p-4 ${riskColors[result.riskLevel] || ''}`}>
-          <h3 className="text-lg font-bold capitalize">{t(`risk_${result.riskLevel}` as any) || result.riskLevel}</h3>
+          <h3 className="text-lg font-bold">{tOptional(`risk_${result.riskLevel}`) ?? result.riskLevel}</h3>
           <div className="mt-2 space-y-2 text-xs">
-            {result.confirmedFacts.length > 0 && (
+            {confirmedFacts.length > 0 && (
               <div>
                 <strong className="text-muted">{t('confirmedFacts')}：</strong>
-                <span>{result.confirmedFacts.join('、')}</span>
+                <span>{confirmedFacts.join('、')}</span>
               </div>
             )}
-            {result.missingInformation.length > 0 && (
+            {missingInfo.length > 0 && (
               <div>
                 <strong className="text-muted">{t('unconfirmedInfo')}：</strong>
-                <span>{result.missingInformation.join('、')}</span>
+                <span>{missingInfo.join('、')}</span>
               </div>
             )}
-            {result.escalationWarnings.length > 0 && (
+            {escalationLabels.length > 0 && (
               <div className="mt-2 rounded-xl bg-red-50 p-2 text-red-700">
                 <strong>⚠ {t('escalationWarning')}：</strong>
-                <span>{result.escalationWarnings.join('、')}</span>
+                <span>{escalationLabels.join('、')}</span>
               </div>
             )}
           </div>
@@ -126,7 +141,9 @@ export default function Assessment() {
         <div className="space-y-2 text-xs">
           <strong>{t('recommendedActions')}：</strong>
           <ul className="list-inside list-disc text-muted">
-            {result.recommendedActions.map((a, i) => <li key={i}>{t(`action_${a}` as any) || a}</li>)}
+            {result.recommendedActions.map((a, i) => (
+              <li key={i}>{tOptional(`action_${a}`) ?? a}</li>
+            ))}
           </ul>
         </div>
 

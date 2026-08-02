@@ -200,7 +200,7 @@ export default function Timeline() {
 }
 
 function TimelineRow({ item, onOpen }: { item: TimelineItem; onOpen: () => void }) {
-  const { t } = useI18n();
+  const { t, tOptional, formatDateTime } = useI18n();
 
   let icon = '📋';
   let title = '';
@@ -219,11 +219,13 @@ function TimelineRow({ item, onOpen }: { item: TimelineItem; onOpen: () => void 
       ? presentSymptoms.join('、')
       : (inc.translatedText?.slice(0, 40) || inc.originalText?.slice(0, 40) || t('incident'));
 
-    subtitle = `${new Date(inc.createdAt).toLocaleString()} · ${t(`status${inc.status.charAt(0).toUpperCase()}${inc.status.slice(1)}` as any) || inc.status}`;
+    const statusLabel =
+      tOptional(`status${inc.status.charAt(0).toUpperCase()}${inc.status.slice(1)}`) ?? inc.status;
+    subtitle = `${formatDateTime(inc.createdAt)} · ${statusLabel}`;
 
     if (inc.riskLevel) {
       badge = {
-        text: t(`risk_${inc.riskLevel}` as any) || inc.riskLevel,
+        text: tOptional(`risk_${inc.riskLevel}`) ?? inc.riskLevel,
         className:
           inc.riskLevel === 'emergency' ? 'bg-red-100 text-red-700'
             : inc.riskLevel === 'urgent' ? 'bg-orange-100 text-orange-700'
@@ -240,7 +242,7 @@ function TimelineRow({ item, onOpen }: { item: TimelineItem; onOpen: () => void 
     if (log.meals?.percentage !== undefined) parts.push(`${t('food')} ${log.meals.percentage}%`);
     if (log.sleep?.hours) parts.push(`${t('sleep')} ${log.sleep.hours}h`);
 
-    subtitle = `${new Date(log.createdAt).toLocaleString()}${parts.length ? ` · ${parts.join(' · ')}` : ''}`;
+    subtitle = `${formatDateTime(log.createdAt)}${parts.length ? ` · ${parts.join(' · ')}` : ''}`;
 
     if (log.aiAlertTriggered) {
       badge = { text: t('aiAlertTriggered'), className: 'bg-[#F9E6C7] text-[#9B621D]' };

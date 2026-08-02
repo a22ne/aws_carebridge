@@ -4,11 +4,12 @@ import { useI18n } from '@/hooks/useI18n';
 import { useAppState } from '@/hooks/useAppState';
 import { ElderDetail } from '@/components/ElderDetail';
 import { UserProfileCard } from '@/components/UserProfileCard';
+import { labelsForCodes } from '@/constants/careOptions';
 import * as api from '@/services/api';
 import type { Incident, ElderProfile, UserProfile } from '@carebridge/shared-types';
 
 export default function CaregiverHome() {
-  const { t } = useI18n();
+  const { t, tOptional, formatTime } = useI18n();
   const { householdId } = useAppState();
   const navigate = useNavigate();
 
@@ -69,6 +70,7 @@ export default function CaregiverHome() {
   };
 
   const latestIncident = incidents[0];
+  const conditionLabels = labelsForCodes('condition', elderProfile?.chronicConditions, tOptional);
 
   return (
     <div className="space-y-4">
@@ -87,7 +89,7 @@ export default function CaregiverHome() {
           </h2>
           <p className="text-xs text-muted">
             {elderProfile?.city ? `${elderProfile.city} · ` : ''}
-            {elderProfile?.chronicConditions?.join(', ') || t('tapForDetail')}
+            {conditionLabels.length ? conditionLabels.join('、') : t('tapForDetail')}
           </p>
         </div>
       </button>
@@ -113,7 +115,7 @@ export default function CaregiverHome() {
           <div className="flex items-center justify-between">
             <h3 className="text-[15px] font-bold">{t('aiRiskReminder')}</h3>
             <span className="rounded-full bg-[#F9E6C7] px-2.5 py-1 text-[11px] font-bold text-[#9B621D]">
-              {t(`risk_${latestIncident.riskLevel}` as any) || latestIncident.riskLevel}
+              {tOptional(`risk_${latestIncident.riskLevel}`) ?? latestIncident.riskLevel}
             </span>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-[#7A5A28]">
@@ -148,7 +150,7 @@ export default function CaregiverHome() {
               {latestIncident.translatedText?.slice(0, 30) || latestIncident.originalText?.slice(0, 30) || t('latestRecord')}
             </strong>
             <span className="block text-[11px] text-muted">
-              {new Date(latestIncident.createdAt).toLocaleTimeString()} · {latestIncident.status}
+              {formatTime(latestIncident.createdAt)} · {tOptional(`status${latestIncident.status.charAt(0).toUpperCase()}${latestIncident.status.slice(1)}`) ?? latestIncident.status}
             </span>
           </div>
         </div>
@@ -170,6 +172,7 @@ export default function CaregiverHome() {
           gender: elderProfile.gender,
           chronicConditions: elderProfile.chronicConditions || [],
           otherConditions: elderProfile.otherConditions,
+          otherConditionTranslations: elderProfile.otherConditionTranslations,
         } : undefined}
       />
     </div>
