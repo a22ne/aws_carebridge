@@ -39,27 +39,39 @@ export function TrendBarChart({
         {caption && <span>{caption}</span>}
       </div>
 
-      <div className="mt-3 flex h-32 items-end gap-2">
+      {/*
+        Fixed-height plot area. Each column stretches to the full height so the
+        bar track below gets a definite height from flex — percentage heights
+        cannot resolve against an auto-height ancestor.
+      */}
+      <div className="mt-3 flex h-40 items-stretch gap-2">
         {data.map((d, i) => {
           const isLast = i === data.length - 1;
-          const heightPct = d.value === null ? 0 : Math.max((d.value / safeMax) * 100, 6);
+          const heightPct = d.value === null ? 0 : Math.max((d.value / safeMax) * 100, 4);
 
           return (
-            <div key={`${d.label}-${i}`} className="flex flex-1 flex-col items-center justify-end">
-              {d.value !== null && (
-                <span className="mb-1 text-[9px] font-bold text-muted">
-                  {d.value}{unit}
-                </span>
-              )}
-              {d.value === null ? (
-                <div className="h-1.5 w-full rounded-full bg-line" />
-              ) : (
-                <div
-                  className="w-full rounded-t-lg transition-all"
-                  style={{ height: `${heightPct}%`, background: isLast ? lastFill : fill }}
-                />
-              )}
-              <span className="mt-1 text-[9px] text-muted">{d.label}</span>
+            <div key={`${d.label}-${i}`} className="flex h-full flex-1 flex-col">
+              {/* Value label — fixed height keeps every column's track identical */}
+              <span className="h-4 shrink-0 text-center text-[9px] font-bold leading-4 text-muted">
+                {d.value !== null ? `${d.value}${unit}` : ''}
+              </span>
+
+              {/* Bar track: definite height via flex-1, so the bar's % resolves */}
+              <div className="relative min-h-0 flex-1">
+                {d.value === null ? (
+                  <div className="absolute bottom-0 h-1.5 w-full rounded-full bg-line" />
+                ) : (
+                  <div
+                    className="absolute bottom-0 w-full rounded-t-lg transition-[height] duration-300"
+                    style={{ height: `${heightPct}%`, background: isLast ? lastFill : fill }}
+                  />
+                )}
+              </div>
+
+              {/* Axis label */}
+              <span className="h-4 shrink-0 text-center text-[9px] leading-4 text-muted">
+                {d.label}
+              </span>
             </div>
           );
         })}
