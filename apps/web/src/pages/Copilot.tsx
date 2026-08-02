@@ -71,7 +71,10 @@ export default function Copilot() {
 
       if (res.success && res.data) {
         const rawResponse = (res.data as any).response;
-        if (!rawResponse) {
+        if ((res.data as any).blocked) {
+          // Guardrail refused the exchange — show it in the reader's language
+          setMessages(prev => [...prev, { role: 'assistant', contentKey: 'copilotBlocked' }]);
+        } else if (!rawResponse) {
           setMessages(prev => [...prev, { role: 'assistant', contentKey: 'copilotErrorNoReply' }]);
         } else {
           // Strip markdown formatting from AI response

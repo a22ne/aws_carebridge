@@ -170,6 +170,7 @@ export const id = {
   copilotErrorNoReply: 'Maaf, tidak ada jawaban yang diterima.',
   copilotErrorRetryable: 'Sementara tidak dapat menjawab. Coba lagi nanti.',
   copilotErrorNetwork: 'Koneksi gagal. Periksa jaringan Anda.',
+  copilotBlocked: 'CareBridge AI tidak memberikan diagnosis medis. Jelaskan apa yang Anda amati, atau hubungi tenaga medis secara langsung.',
   notifyErrorMissingIncident: 'Tidak dapat mengirim notifikasi: informasi kejadian tidak ada',
   dailyLogDesc: 'Catat kondisi perawatan hari ini',
   dailyLogNoHousehold: 'Silakan gabung keluarga perawatan terlebih dahulu',

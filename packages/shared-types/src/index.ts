@@ -157,6 +157,11 @@ export interface ConversationMessage {
   role: 'user' | 'assistant';
   content: string;
   translatedContent: string | null;
+  /**
+   * Set when Bedrock Guardrails blocked the reply. `content` is empty in that
+   * case; the UI renders a localized notice keyed off this code.
+   */
+  blockedReason?: string | null;
   timestamp: string;
 }
 
@@ -223,6 +228,10 @@ export interface CopilotResponse {
   response: string;
   translatedResponse: string | null;
   suggestedFollowUps: string[];
+  /** True when Bedrock Guardrails blocked the exchange; `response` is empty */
+  blocked?: boolean;
+  /** Machine-readable reason, e.g. `MEDICAL_ADVICE_BLOCKED` */
+  blockedReason?: string | null;
 }
 
 // === Chat (caregiver <-> contact real-time messaging) ===

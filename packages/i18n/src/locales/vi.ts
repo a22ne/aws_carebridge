@@ -170,6 +170,7 @@ export const vi = {
   copilotErrorNoReply: 'Xin lỗi, không nhận được phản hồi.',
   copilotErrorRetryable: 'Tạm thời không thể trả lời. Vui lòng thử lại sau.',
   copilotErrorNetwork: 'Kết nối thất bại. Vui lòng kiểm tra mạng.',
+  copilotBlocked: 'CareBridge AI không cung cấp chẩn đoán y tế. Hãy mô tả những gì bạn quan sát được, hoặc liên hệ trực tiếp với chuyên gia y tế.',
   notifyErrorMissingIncident: 'Không thể gửi thông báo: thiếu thông tin sự cố',
   dailyLogDesc: 'Ghi nhận tình trạng chăm sóc hôm nay',
   dailyLogNoHousehold: 'Vui lòng tham gia gia đình chăm sóc trước',

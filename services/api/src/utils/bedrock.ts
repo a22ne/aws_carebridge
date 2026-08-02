@@ -13,6 +13,24 @@ interface ConverseWithGuardrailOptions extends ConverseOptions {
   useGuardrail?: boolean;
 }
 
+/**
+ * Returned by `converse` when Bedrock Guardrails blocks the exchange.
+ *
+ * Deliberately a language-neutral sentinel rather than a human-readable string:
+ * this utility has no idea which of the four app languages the reader uses, so
+ * the wording belongs in the UI's i18n dictionary.
+ */
+export const GUARDRAIL_BLOCKED = '__GUARDRAIL_BLOCKED__';
+
+/** Thrown by `converseJson` when the guardrail blocks — never worth retrying. */
+export class GuardrailBlockedError extends Error {
+  readonly code = 'MEDICAL_ADVICE_BLOCKED';
+  constructor() {
+    super('Blocked by Bedrock Guardrails');
+    this.name = 'GuardrailBlockedError';
+  }
+}
+
 export async function converse({ systemPrompt, userMessage, maxTokens = 2048, useGuardrail = false }: ConverseWithGuardrailOptions): Promise<string> {
   const input: any = {
     modelId: config.bedrockModelId,
@@ -40,12 +58,10 @@ export async function converse({ systemPrompt, userMessage, maxTokens = 2048, us
   const command = new ConverseCommand(input);
   const response = await bedrockClient.send(command);
 
-  // Check if guardrail intervened
+  // Guardrail intervened — hand back a sentinel and let the caller localise it
   if (response.stopReason === 'guardrail_intervened') {
-    return JSON.stringify({
-      blocked: true,
-      message: 'CareBridge AI 不提供醫療診斷。如有疑慮請聯絡醫療專業人員。',
-    });
+    console.log('[Bedrock] guardrail intervened', { guardrailId: config.bedrockGuardrailId });
+    return GUARDRAIL_BLOCKED;
   }
 
   const outputText = response.output?.message?.content?.[0]?.text;
@@ -65,10 +81,13 @@ export async function converseJson<T>(options: ConverseWithGuardrailOptions, max
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const raw = await converse(options);
+      if (raw === GUARDRAIL_BLOCKED) throw new GuardrailBlockedError();
       // Extract JSON from response (may be wrapped in markdown code block)
       const jsonStr = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       return JSON.parse(jsonStr) as T;
     } catch (err) {
+      // A guardrail block is a decision, not a transient failure — do not retry
+      if (err instanceof GuardrailBlockedError) throw err;
       lastError = err instanceof Error ? err : new Error(String(err));
       console.warn(`[Bedrock] Attempt ${attempt + 1} failed:`, lastError.message);
       if (attempt < maxRetries) {

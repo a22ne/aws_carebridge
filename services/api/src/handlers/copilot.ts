@@ -1,7 +1,7 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { config } from '../utils/config.js';
 import { db, PutCommand, GetCommand, UpdateCommand, QueryCommand } from '../utils/db.js';
-import { converse } from '../utils/bedrock.js';
+import { converse, GUARDRAIL_BLOCKED } from '../utils/bedrock.js';
 import { success, error, serverError } from '../utils/response.js';
 import { generateId } from '../utils/id.js';
 
@@ -106,23 +106,20 @@ export const sendMessage = async (event: APIGatewayProxyEventV2): Promise<APIGat
       useGuardrail: true,
     });
 
-    // Check if response was blocked by guardrail
-    let responseContent: string;
-    let blocked = false;
-    try {
-      const parsed = JSON.parse(response);
-      if (parsed.blocked) {
-        responseContent = parsed.message;
-        blocked = true;
-      } else {
-        responseContent = response;
-      }
-    } catch {
-      responseContent = response;
-    }
+    // A guardrail block carries no text: the UI renders a localized notice from
+    // `blockedReason`, so nothing language-specific is invented here.
+    const blocked = response === GUARDRAIL_BLOCKED;
+    const responseContent = blocked ? '' : response;
+    const blockedReason = blocked ? 'MEDICAL_ADVICE_BLOCKED' : null;
 
     // Add assistant message
-    messages.push({ role: 'assistant', content: responseContent, translatedContent: null, timestamp: new Date().toISOString() });
+    messages.push({
+      role: 'assistant',
+      content: responseContent,
+      translatedContent: null,
+      blockedReason,
+      timestamp: new Date().toISOString(),
+    });
 
     // Update conversation
     await db.send(new UpdateCommand({
@@ -140,6 +137,8 @@ export const sendMessage = async (event: APIGatewayProxyEventV2): Promise<APIGat
         response: responseContent,
         translatedResponse: null,
         suggestedFollowUps: [],
+        blocked,
+        blockedReason,
       },
       requestId,
     });

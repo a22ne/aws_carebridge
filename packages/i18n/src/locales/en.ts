@@ -170,6 +170,7 @@ export const en = {
   copilotErrorNoReply: 'Sorry, no response was received.',
   copilotErrorRetryable: 'Temporarily unable to respond. Please try again shortly.',
   copilotErrorNetwork: 'Connection failed. Please check your network.',
+  copilotBlocked: 'CareBridge AI does not provide medical diagnosis. Describe what you observed, or contact a medical professional directly.',
   notifyErrorMissingIncident: 'Cannot send notification: incident information is missing',
   dailyLogDesc: 'Record today\'s care observations',
   dailyLogNoHousehold: 'Please join a care family first',

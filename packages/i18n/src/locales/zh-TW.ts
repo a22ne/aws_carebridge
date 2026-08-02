@@ -212,6 +212,7 @@ export const zhTW = {
   copilotErrorNoReply: '抱歉，無法取得回覆。',
   copilotErrorRetryable: '暫時無法回覆，請稍後重試。',
   copilotErrorNetwork: '連線失敗，請檢查網路。',
+  copilotBlocked: 'CareBridge AI 不提供醫療診斷。請描述你觀察到的狀況，或直接聯絡醫療專業人員。',
   // Notify errors
   notifyErrorMissingIncident: '無法送出通知：缺少事件資訊',
   // Daily log
