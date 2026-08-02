@@ -221,4 +221,9 @@ export const vi = {
   symptomUnknown: 'Không chắc',
   excretion: 'Bài tiết',
   excretionPlaceholder: 'Bình thường, táo bón, tiêu chảy...',
+  trendChartFood: 'Lượng ăn hàng ngày',
+  trendChartSleep: 'Giờ ngủ',
+  trendChartWeight: 'Thay đổi cân nặng',
+  trendDaysCaption: '{n} ngày',
+  trendAvg: 'TB',
 } as const;

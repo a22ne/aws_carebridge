@@ -272,4 +272,10 @@ export const zhTW = {
   // Excretion field
   excretion: '排泄',
   excretionPlaceholder: '正常、便秘、腹瀉...',
+  // Trend charts
+  trendChartFood: '每日食量',
+  trendChartSleep: '睡眠時數',
+  trendChartWeight: '體重變化',
+  trendDaysCaption: '{n} 天',
+  trendAvg: '平均',
 } as const;

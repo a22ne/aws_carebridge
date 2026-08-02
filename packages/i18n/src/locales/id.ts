@@ -221,4 +221,9 @@ export const id = {
   symptomUnknown: 'Tidak yakin',
   excretion: 'Buang air',
   excretionPlaceholder: 'Normal, sembelit, diare...',
+  trendChartFood: 'Asupan makan harian',
+  trendChartSleep: 'Jam tidur',
+  trendChartWeight: 'Perubahan berat',
+  trendDaysCaption: '{n} hari',
+  trendAvg: 'rata-rata',
 } as const;

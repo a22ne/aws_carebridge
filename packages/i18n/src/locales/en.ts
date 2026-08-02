@@ -221,4 +221,9 @@ export const en = {
   symptomUnknown: 'Unsure',
   excretion: 'Excretion',
   excretionPlaceholder: 'Normal, constipated, diarrhea...',
+  trendChartFood: 'Daily food intake',
+  trendChartSleep: 'Sleep hours',
+  trendChartWeight: 'Weight change',
+  trendDaysCaption: '{n} days',
+  trendAvg: 'avg',
 } as const;
